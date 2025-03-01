@@ -2,7 +2,9 @@
 
 These demonstrations illustrate key concepts from **Section 10 of the UETA (Uniform Electronic Transactions Act)** and explore how AI-driven agents can interact with legal frameworks in a responsible and transparent manner.  
 
-This was a collaboration between **Dazza Greenwood** and **Andor Kesselman**, relying on **[UETA and LLM Agents: A Deep Dive into Legal Error Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into)** as reference material. To learn more, please go to this amazing blog post where Dazza explains the nuances and details of how Legal Error Handling of Agents is critical. 
+This was a collaboration between **Dazza Greenwood** and **Andor Kesselman**, relying on **[UETA and LLM Agents: A Deep Dive into Legal Error Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into)** as reference material. To learn more, please go to this amazing blog post where Dazza explains the nuances and details of how legal error handling of agents is critical. 
+
+<TODO: Describe more context here>
 
 ## 📌 Overview  
 
