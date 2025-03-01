@@ -1,9 +1,22 @@
 # UETA Agent -- Goods Producer Demo
 
-This repository demonstrates how AI-driven agents can interact with legal frameworks and electronic transactions in the context of a goods producer. Inspired by **Section 10 of the UETA (Uniform Electronic Transactions Act)**, this demo simulates a business API that offers a catalog of products and processes orders, while users interact via a CLI tool that manages a wallet and places orders.
+This repository showcases how AI-driven agents can integrate with legal
+frameworks and electronic transactions in the context of a modern goods
+producer. Inspired by Section 10 of the UETA (Uniform Electronic Transactions
+Act), the demo features a business API that offers a product catalog and
+processes orders, while a command-line tool allows users to manage a digital
+wallet and place orders. The system emphasizes robust error handling,
+auditability, and progressive confirmation of transactions.
 
-This demo was developed as a collaboration between **Dazza Greenwood** and **Andor Kesselman**, building on concepts from [UETA and LLM Agents: A Deep Dive into Legal Error Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into).  
-<TODO: Add additional context and explanation of legal and technical nuances.>
+Developed in collaboration between Dazza Greenwood and Andor Kesselman, this
+project builds on the insights presented in [UETA and LLM Agents: A Deep Dive
+into Legal Error
+Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into).
+In that article, the author explores the challenges and opportunities in merging
+AI-assisted legal processes with electronic transactions, including
+transparency, accountability, and the need for clear error correction workflows.
+This demo reflects those principles, integrating technical and legal nuances to
+simulate a secure and auditable digital commerce system.
 
 ## 📌 Overview
 
