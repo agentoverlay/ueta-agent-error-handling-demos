@@ -35,6 +35,15 @@ This repository contains demos that illustrate several aspects of AI-assisted le
 
 * Audit Tracing -- if `auditableLog` is set true, consumer and producer both maintain logs to mitigate liability.
 
+### Roadmap
+
+* Progressive Confirmation
+* Detection Mechanisms
+* Error Correction -- Prompt User When An Error Happens. Ideally measures results.
+* System State Tracking
+* Two and Three Party Agreements
+
+ 
 ## 🚀 Getting Started
 
 ### Prerequisites
