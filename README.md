@@ -1,42 +1,34 @@
-# UETA Agent -- Section 10 Error Handling Demos
+# UETA Agent -- Goods Producer Demo
 
-These demonstrations illustrate key concepts from **Section 10 of the UETA (Uniform Electronic Transactions Act)** and explore how AI-driven agents can interact with legal frameworks in a responsible and transparent manner.  
+This repository demonstrates how AI-driven agents can interact with legal frameworks and electronic transactions in the context of a goods producer. Inspired by **Section 10 of the UETA (Uniform Electronic Transactions Act)**, this demo simulates a business API that offers a catalog of products and processes orders, while users interact via a CLI tool that manages a wallet and places orders.
 
-This was a collaboration between **Dazza Greenwood** and **Andor Kesselman**, relying on **[UETA and LLM Agents: A Deep Dive into Legal Error Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into)** as reference material. To learn more, please go to this amazing blog post where Dazza explains the nuances and details of how legal error handling of agents is critical. 
+This demo was developed as a collaboration between **Dazza Greenwood** and **Andor Kesselman**, building on concepts from [UETA and LLM Agents: A Deep Dive into Legal Error Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into).  
+<TODO: Add additional context and explanation of legal and technical nuances.>
 
-<TODO: Describe more context here>
+## 📌 Overview
 
-## 📌 Overview  
+This repository contains demos that illustrate several aspects of AI-assisted legal transactions and goods ordering:
 
-This repository contains small, focused demos that showcase different aspects of AI-assisted legal transactions, including:  
+- **Product Catalog and Order Processing**  
+  - The business API acts as a goods producer, providing a catalog of products (SKU, description, and price) and processing orders from users.
+- **Error Simulation in Order Processing**  
+  - An optional error simulation mode (activated with a flag) randomly fails approximately 10% of orders, logging errors accordingly.
+- **User Wallet and Order Transactions**  
+  - The user CLI maintains a wallet with a starting balance. Orders placed deduct funds from the wallet based on product prices.
+- **Autonomous Agent for Order Placement**  
+  - An agent mode automatically places random orders at random intervals, simulating continuous purchasing activity.
 
-- **Human-in-the-Loop for LLM-Driven Transactions**  
-  - A demo ensuring human oversight before executing an AI-generated agreement.  
-- **Transparent, Actionable Prompts in AI-Assisted Transactions**  
-  - A chatbot that generates contracts with clear, editable explanations.  
-- **Audit Trails for AI-Generated Agreements**  
-  - A system logging every AI-generated transaction with metadata for accountability.  
-- **Error-Correction Workflow for AI-Generated Contracts**  
-  - A mechanism to flag, dispute, and correct AI-generated contract terms.  
-- **Legal Interpretation of "Prompt Action" in UETA**  
-  - A tool to analyze different response times and classify whether they meet legal standards.  
-- **Dispute Resolution Lifecycle Tracker**  
-  - A system visualizing the lifecycle of legal disputes and their resolution timeframes.  
-- **High-Volume Error Correction UX**  
-  - A dashboard simulating thousands of AI-generated transactions and their error resolution process.  
+## 🚀 Getting Started
 
-## 🚀 Getting Started  
-
-## Prerequisites
+### Prerequisites
 
 - [Node.js](https://nodejs.org/) (version 14 or later)
 - [npm](https://www.npmjs.com/)
 
 ## Demo
 
-Work in progress
-
-<img width="1587" alt="image" src="https://github.com/user-attachments/assets/9e15e422-682c-4942-8566-c19ddcc0087d" />
+**Work in progress**  
+![Demo Screenshot](https://github.com/user-attachments/assets/9e15e422-682c-4942-8566-c19ddcc0087d)
 
 ## Installation
 
@@ -51,7 +43,7 @@ Work in progress
 
 ### 1. Start the Business API
 
-The business API runs on port **4000**.
+The business API simulates a goods producer by offering a product catalog and processing orders on port **4000**.
 
 - **Normal mode:**
 
@@ -59,7 +51,7 @@ The business API runs on port **4000**.
   npm run start:business
   ```
 
-- **Error simulation mode:** (Approximately 10% of transactions will be recorded with an error)
+- **Error simulation mode:** (Approximately 10% of orders will trigger a simulated error)
 
   ```bash
   npm run start:business -- --with-error
@@ -67,11 +59,11 @@ The business API runs on port **4000**.
 
 ### 2. Use the User CLI
 
-The user CLI provides several commands to interact with the ledger.
+The user CLI lets you create an account with a wallet, list available products, place orders, and run an autonomous agent that places random orders.
 
 #### a. Create an Account
 
-This command creates a new account, subtracts an initial deposit (default is 100) from the wallet, and sends a deposit transaction to the business API.
+This command creates a new account with a wallet. Each new user starts with a balance of 1000. You can also deduct an initial deposit (default: 100) if desired.
 
 - **Default deposit:**
 
@@ -85,45 +77,42 @@ This command creates a new account, subtracts an initial deposit (default is 100
   npm run start:user create-account -- --deposit 200
   ```
 
-#### b. Send a Transaction
+#### b. List Available Products
 
-Submit a transaction to either add money or withdraw money. If you do not supply an `--accountId`, the CLI uses the stored account from the `create-account` command.
+Display the product catalog from the business API:
 
-- **Add money transaction:**
+```bash
+npm run start:user list-products
+```
 
-  ```bash
-  npm run start:user transaction -- --type add_money --amount 50
-  ```
+#### c. Place an Order
 
-- **Withdraw money transaction:**
+Submit an order by specifying the product SKU and quantity. The CLI checks your wallet balance before placing the order. For example, to order 2 units of the product with SKU `SKU001`:
 
-  ```bash
-  npm run start:user transaction -- --type withdraw_money --amount 30
-  ```
+```bash
+npm run start:user order -- --sku SKU001 --quantity 2
+```
 
-#### c. Start Autonomous Agent Mode
+#### d. Start Autonomous Agent Mode
 
-Launch an autonomous agent that sends random transactions at random intervals using the stored account:
+Launch the autonomous agent mode, which automatically places random orders at random intervals using your stored account:
 
 ```bash
 npm run start:user agent
 ```
 
-### 3. View the Ledger
+### 3. View Order Logs
 
-You can inspect the ledger by making a GET request to the business API:
-
-```
-http://localhost:4000/ledger
-```
-
-This endpoint returns the complete ledger with all transactions and the latest balances per account.
+While there is no dedicated API endpoint for orders, you can view order processing details (including simulated errors) in the terminal where the business API is running. In error simulation mode, faulty orders will be logged using `console.error` along with the latest order status for the account.
 
 ## Project Structure
 
-- **business.ts** - Business API server that handles ledger transactions and logs activity.
-- **user.ts** - User CLI tool for creating accounts, managing a wallet, and sending transactions (or running as an agent).
-- **package.json** - Contains project scripts and dependencies.
+- **business.ts**  
+  The business API server simulates a goods producer. It maintains a catalog of products, processes orders (with optional error simulation), and logs order statuses.
+- **user.ts**  
+  The user CLI tool allows you to create accounts, manage a wallet, list products, place orders, and run an autonomous agent for order placement.
+- **package.json**  
+  Contains project scripts and dependencies.
 
 ## License
 
