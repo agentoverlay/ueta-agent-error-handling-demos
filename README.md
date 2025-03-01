@@ -1,4 +1,4 @@
-# UETA Agent Demos  
+# UETA Agent -- Section 10 Error Handling Demos
 
 These demonstrations illustrate key concepts from **Section 10 of the UETA (Uniform Electronic Transactions Act)** and explore how AI-driven agents can interact with legal frameworks in a responsible and transparent manner.  
 
