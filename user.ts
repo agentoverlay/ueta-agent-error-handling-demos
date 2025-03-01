@@ -8,7 +8,7 @@ import path from "path";
 
 const ACCOUNT_FILE = path.join(__dirname, "account.json");
 // Each new user starts with this wallet balance.
-const STARTING_BALANCE = 1000;
+const STARTING_BALANCE = 100000;
 
 // Command to create a new account. The wallet is initialized with STARTING_BALANCE minus an optional deposit.
 program

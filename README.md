@@ -27,37 +27,6 @@ This repository contains small, focused demos that showcase different aspects of
 
 ## 🚀 Getting Started  
 
-### Prerequisites  
-- [Node.js](https://nodejs.org/) (for frontend demos)  
-
-## Features
-
-- **Business API**
-  - Maintains a ledger with a per-account balance.
-  - Supports a `--with-error` flag that simulates errors in roughly 10% of transactions.
-  - Logs every transaction along with the latest balance. Faulty transactions are logged as errors.
-  
-- **User CLI**
-  - Creates an account with a wallet (starting balance: 1000) and deducts an initial deposit (default: 100) from the wallet.
-  - Supports transactions:
-    - `add_money` (deducts funds from the user's wallet)
-    - `withdraw_money` (adds funds back to the wallet)
-  - Includes an `agent` mode which autonomously sends random transactions at random intervals.
-
-## Features
-
-- **Business API**
-  - Maintains a ledger with a per-account balance.
-  - Supports a `--with-error` flag that simulates errors in roughly 10% of transactions.
-  - Logs every transaction along with the latest balance. Faulty transactions are logged as errors.
-  
-- **User CLI**
-  - Creates an account with a wallet (starting balance: 1000) and deducts an initial deposit (default: 100) from the wallet.
-  - Supports transactions:
-    - `add_money` (deducts funds from the user's wallet)
-    - `withdraw_money` (adds funds back to the wallet)
-  - Includes an `agent` mode which autonomously sends random transactions at random intervals.
-
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (version 14 or later)
