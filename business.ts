@@ -1,86 +1,90 @@
 import express from "express";
 import { v4 as uuid } from "uuid";
 
-type Transaction = {
+type Product = {
+    sku: string;
+    description: string;
+    price: number;
+};
+
+type Order = {
     id: string;
-    amount: number;
-    date: Date;
     accountId: string;
+    sku: string;
+    quantity: number;
+    totalPrice: number;
+    orderDate: Date;
+    status: "received" | "delivered" | "error";
     error?: string;
 };
 
-type Ledger = {
-    id: string;
-    name: string;
-    // The balance is kept per account.
-    balance: Record<string, number>;
-    transactions: Transaction[];
-};
-
-// Check for the flag; if present, simulate errors in 1 out of 10 transactions.
+// Check for the flag to simulate errors (approx. 10% chance)
 const withError = process.argv.includes("--with-error");
 
-const ledger: Ledger = {
-    id: uuid(),
-    name: "Business Ledger",
-    balance: {},
-    transactions: [],
-};
+// A sample list of products
+const products: Product[] = [
+    { sku: "SKU001", description: "Widget A", price: 50 },
+    { sku: "SKU002", description: "Widget B", price: 30 },
+    { sku: "SKU003", description: "Gadget C", price: 100 },
+];
+
+const orders: Order[] = [];
 
 const app = express();
 app.use(express.json());
 
-app.get("/ledger", (req, res) => {
-    res.json(ledger);
+// Endpoint to list all available products
+app.get("/products", (req, res) => {
+    res.json(products);
 });
 
-// POST endpoint to add a transaction to the ledger.
-// Expected payload: { accountId: string, type: "add_money" | "withdraw_money", amount: number }
-app.post("/ledger/transaction", (req, res) => {
-    const { accountId, type, amount } = req.body;
-    if (!accountId || !type || typeof amount !== "number") {
+// Endpoint to place an order.
+// Expected payload: { accountId: string, sku: string, quantity: number }
+app.post("/order", (req, res) => {
+    const { accountId, sku, quantity } = req.body;
+    if (!accountId || !sku || typeof quantity !== "number" || quantity <= 0) {
         return res.status(400).json({ error: "Invalid payload" });
     }
 
-    // For withdrawals, the effective amount is negative.
-    const effectiveAmount = type === "withdraw_money" ? -amount : amount;
-
-    const transaction: Transaction = {
-        id: uuid(),
-        amount: effectiveAmount,
-        date: new Date(),
-        accountId,
-    };
-
-    // Check for simulated error: 10% chance if withError flag is active.
-    if (withError && Math.random() < 0.1) {
-        transaction.error = "Simulated error";
-        ledger.transactions.push(transaction);
-        console.error(
-            `[ERROR] Faulty transaction recorded: ${JSON.stringify(
-                transaction,
-            )}`,
-        );
-        console.log(
-            `Latest balance for account ${accountId}: ${
-                ledger.balance[accountId] || 0
-            }`,
-        );
-        return res.status(201).json(transaction);
+    // Find the product for the given SKU.
+    const product = products.find((p) => p.sku === sku);
+    if (!product) {
+        return res.status(404).json({ error: "Product not found" });
     }
 
-    // Update ledger and push transaction.
-    ledger.balance[accountId] =
-        (ledger.balance[accountId] || 0) + effectiveAmount;
-    ledger.transactions.push(transaction);
+    const totalPrice = product.price * quantity;
+    const order: Order = {
+        id: uuid(),
+        accountId,
+        sku,
+        quantity,
+        totalPrice,
+        orderDate: new Date(),
+        status: "received",
+    };
 
-    // Log transaction and the latest balance.
-    console.log(`[INFO] Transaction recorded: ${JSON.stringify(transaction)}`);
+    // Simulate error in 10% of orders if the flag is active.
+    if (withError && Math.random() < 0.1) {
+        order.error = "Simulated error in order processing";
+        order.status = "error";
+        orders.push(order);
+        console.error(`[ERROR] Order error: ${JSON.stringify(order)}`);
+        console.log(
+            `Latest order status for account ${accountId}: ${order.status}`,
+        );
+        return res.status(201).json(order);
+    }
+
+    // Process order: instantly deliver for our simulation.
+    order.status = "delivered";
+    orders.push(order);
+
+    console.log(`[INFO] Order received: ${JSON.stringify(order)}`);
     console.log(
-        `Latest balance for account ${accountId}: ${ledger.balance[accountId]}`,
+        `Latest order status for account ${accountId}: ${order.status}`,
     );
 
-    return res.status(201).json(transaction);
+    return res.status(201).json(order);
 });
 
 app.listen(4000, () => {

@@ -7,20 +7,16 @@ import fs from "fs";
 import path from "path";
 
 const ACCOUNT_FILE = path.join(__dirname, "account.json");
-
-// The starting wallet balance for a new user.
+// Each new user starts with this wallet balance.
 const STARTING_BALANCE = 1000;
 
-// -----------------------------
-// create-account command:
-// Creates a new account with an initial deposit (default deposit: 100)
-// which is deducted from the wallet and sent to the business ledger.
+// Command to create a new account. The wallet is initialized with STARTING_BALANCE minus an optional deposit.
 program
     .command("create-account")
-    .description("Create a new account for the user with an initial deposit")
+    .description("Create a new account with a wallet balance")
     .option(
         "--deposit <amount>",
-        "Initial deposit amount",
+        "Initial deposit (order credit) amount",
         (val) => parseFloat(val),
         100,
     )
@@ -36,50 +32,42 @@ program
         };
         fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
         console.log("Account created:", account);
+    });
 
-        // Deposit the initial funds to the business ledger.
-        const payload = {
-            accountId: account.id,
-            type: "add_money",
-            amount: depositAmount,
-        };
-
+// Command to list available products from the business.
+program
+    .command("list-products")
+    .description("List available products")
+    .action(async () => {
         try {
-            const response = await fetch(
-                "http://localhost:4000/ledger/transaction",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                },
-            );
+            const response = await fetch("http://localhost:4000/products");
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error("Error depositing initial funds:", errorData);
-            } else {
-                const transaction = await response.json();
-                console.log("Initial deposit transaction:", transaction);
+                console.error("Error fetching products.");
+                process.exit(1);
             }
+            const products = await response.json();
+            console.log("Available products:");
+            products.forEach((p: any) => {
+                console.log(
+                    `SKU: ${p.sku}, Description: ${p.description}, Price: ${p.price}`,
+                );
+            });
         } catch (error) {
             console.error("Error connecting to business API:", error);
+            process.exit(1);
         }
     });
 
-// -----------------------------
-// transaction command:
-// Sends a transaction (either add_money or withdraw_money)
-// and updates the local wallet balance accordingly.
+// Command to place an order.
+// Usage: npm run start:user order -- --sku <sku> --quantity <n> [--accountId <id>]
 program
-    .command("transaction")
-    .description("Create a new transaction")
-    .requiredOption(
-        "--type <type>",
-        "Transaction type: add_money or withdraw_money",
-    )
-    .requiredOption("--amount <amount>", "Transaction amount", parseFloat)
+    .command("order")
+    .description("Place an order for a product")
+    .requiredOption("--sku <sku>", "Product SKU")
+    .requiredOption("--quantity <quantity>", "Quantity to order", parseInt)
     .option(
         "--accountId <accountId>",
-        "Account ID to use (if not provided, uses the stored account)",
+        "Account ID (if not provided, uses stored account)",
     )
     .action(async (options) => {
         let accountId = options.accountId;
@@ -88,13 +76,6 @@ program
                 const data = fs.readFileSync(ACCOUNT_FILE, "utf-8");
                 const account = JSON.parse(data);
                 accountId = account.id;
-                if (
-                    options.type === "add_money" &&
-                    account.wallet < options.amount
-                ) {
-                    console.error("Insufficient funds in wallet.");
-                    process.exit(1);
-                }
             } else {
                 console.error(
                     'No account found. Create an account first using "create-account".',
@@ -102,40 +83,59 @@ program
                 process.exit(1);
             }
         }
-        // Load the account so we can update the wallet.
-        const data = fs.readFileSync(ACCOUNT_FILE, "utf-8");
-        const account = JSON.parse(data);
+        // Load account so we can update the wallet.
+        const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
+        let account = JSON.parse(accountData);
+
+        // Fetch products to get the price for the provided SKU.
+        let product;
+        try {
+            const res = await fetch("http://localhost:4000/products");
+            if (!res.ok) {
+                console.error("Error fetching products.");
+                process.exit(1);
+            }
+            const products = await res.json();
+            product = products.find((p: any) => p.sku === options.sku);
+            if (!product) {
+                console.error("Product not found for SKU:", options.sku);
+                process.exit(1);
+            }
+        } catch (error) {
+            console.error("Error connecting to business API:", error);
+            process.exit(1);
+        }
+
+        const totalCost = product.price * options.quantity;
+        if (account.wallet < totalCost) {
+            console.error(
+                `Insufficient funds in wallet. Wallet: ${account.wallet}, Order cost: ${totalCost}`,
+            );
+            process.exit(1);
+        }
 
         const payload = {
             accountId,
-            type: options.type,
-            amount: options.amount,
+            sku: options.sku,
+            quantity: options.quantity,
         };
 
         try {
-            const response = await fetch(
-                "http://localhost:4000/ledger/transaction",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                },
-            );
+            const response = await fetch("http://localhost:4000/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("Error:", errorData);
+                console.error("Error placing order:", errorData);
                 process.exit(1);
             }
-            const transaction = await response.json();
-            console.log("Transaction created:", transaction);
+            const order = await response.json();
+            console.log("Order placed:", order);
 
-            // Update the wallet balance:
-            // For add_money, subtract funds (deposit); for withdraw_money, add funds.
-            if (options.type === "add_money") {
-                account.wallet -= options.amount;
-            } else if (options.type === "withdraw_money") {
-                account.wallet += options.amount;
-            }
+            // Deduct funds from the wallet.
+            account.wallet -= totalCost;
             fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
             console.log("Updated wallet balance:", account.wallet);
         } catch (error) {
@@ -144,15 +144,10 @@ program
         }
     });
 
-// -----------------------------
-// agent command:
-// Runs an autonomous agent that sends random transactions at random intervals.
-// It picks a random type and random amount (between 10 and 100) for each transaction.
+// Command to run an autonomous agent that places random orders.
 program
     .command("agent")
-    .description(
-        "Start autonomous agent mode (sends random transactions at random intervals)",
-    )
+    .description("Start autonomous agent mode to place random orders")
     .action(async () => {
         if (!fs.existsSync(ACCOUNT_FILE)) {
             console.error(
@@ -165,46 +160,62 @@ program
 
         console.log("Starting autonomous agent mode with account:", account.id);
 
-        async function sendRandomTransaction() {
+        async function sendRandomOrder() {
             // Wait a random delay between 1 and 5 seconds.
             const delay = Math.floor(Math.random() * 5000) + 1000;
             await new Promise((res) => setTimeout(res, delay));
 
-            // Randomly choose a transaction type.
-            const type = Math.random() < 0.5 ? "add_money" : "withdraw_money";
-            // Random amount between 10 and 100.
-            const amount = Math.floor(Math.random() * 91) + 10;
+            // Fetch products.
+            let products;
+            try {
+                const res = await fetch("http://localhost:4000/products");
+                if (!res.ok) {
+                    console.error("Error fetching products.");
+                    return;
+                }
+                products = await res.json();
+            } catch (error) {
+                console.error("Error connecting to business API:", error);
+                return;
+            }
+            if (!products || products.length === 0) {
+                console.error("No products available.");
+                return;
+            }
 
-            // For deposits, ensure there are sufficient funds.
-            if (type === "add_money" && account.wallet < amount) {
+            // Choose a random product and quantity.
+            const product =
+                products[Math.floor(Math.random() * products.length)];
+            const quantity = Math.floor(Math.random() * 5) + 1;
+            const totalCost = product.price * quantity;
+
+            if (account.wallet < totalCost) {
                 console.log(
-                    `Skipping add_money transaction: insufficient funds (wallet: ${account.wallet}, needed: ${amount})`,
+                    `Skipping order: insufficient funds (wallet: ${account.wallet}, needed: ${totalCost})`,
                 );
                 return;
             }
 
-            const payload = { accountId: account.id, type, amount };
+            const payload = {
+                accountId: account.id,
+                sku: product.sku,
+                quantity,
+            };
 
             try {
-                const response = await fetch(
-                    "http://localhost:4000/ledger/transaction",
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload),
-                    },
-                );
+                const response = await fetch("http://localhost:4000/order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("Agent transaction error:", errorData);
+                    console.error("Agent order error:", errorData);
                 } else {
-                    const transaction = await response.json();
-                    console.log("Agent transaction:", transaction);
-                    if (type === "add_money") {
-                        account.wallet -= amount;
-                    } else if (type === "withdraw_money") {
-                        account.wallet += amount;
-                    }
+                    const order = await response.json();
+                    console.log("Agent order placed:", order);
+                    // Deduct funds from the wallet.
+                    account.wallet -= totalCost;
                     fs.writeFileSync(
                         ACCOUNT_FILE,
                         JSON.stringify(account, null, 2),
@@ -218,7 +229,7 @@ program
 
         async function agentLoop() {
             while (true) {
-                await sendRandomTransaction();
+                await sendRandomOrder();
             }
         }
         agentLoop();
