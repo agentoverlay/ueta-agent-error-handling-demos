@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start:business": "ts-node business.ts",
-    "start:user": "ts-node user.ts"
+    "start:human": "ts-node human.ts",
+    "start:agent": "ts-node agent.ts"
   },
   "dependencies": {
     "commander": "^10.0.1",
