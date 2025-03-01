@@ -26,52 +26,127 @@ This repository contains small, focused demos that showcase different aspects of
 ### Prerequisites  
 - [Node.js](https://nodejs.org/) (for frontend demos)  
 
-### Installation  
-Clone the repository:  
+## Features
+
+- **Business API**
+  - Maintains a ledger with a per-account balance.
+  - Supports a `--with-error` flag that simulates errors in roughly 10% of transactions.
+  - Logs every transaction along with the latest balance. Faulty transactions are logged as errors.
+  
+- **User CLI**
+  - Creates an account with a wallet (starting balance: 1000) and deducts an initial deposit (default: 100) from the wallet.
+  - Supports transactions:
+    - `add_money` (deducts funds from the user's wallet)
+    - `withdraw_money` (adds funds back to the wallet)
+  - Includes an `agent` mode which autonomously sends random transactions at random intervals.
+
+## Features
+
+- **Business API**
+  - Maintains a ledger with a per-account balance.
+  - Supports a `--with-error` flag that simulates errors in roughly 10% of transactions.
+  - Logs every transaction along with the latest balance. Faulty transactions are logged as errors.
+  
+- **User CLI**
+  - Creates an account with a wallet (starting balance: 1000) and deducts an initial deposit (default: 100) from the wallet.
+  - Supports transactions:
+    - `add_money` (deducts funds from the user's wallet)
+    - `withdraw_money` (adds funds back to the wallet)
+  - Includes an `agent` mode which autonomously sends random transactions at random intervals.
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) (version 14 or later)
+- [npm](https://www.npmjs.com/)
+
+## Installation
+
+1. Clone the repository.
+2. Install dependencies by running:
+
+   ```bash
+   npm install
+   ```
+
+## Running the Application
+
+### 1. Start the Business API
+
+The business API runs on port **4000**.
+
+- **Normal mode:**
+
+  ```bash
+  npm run start:business
+  ```
+
+- **Error simulation mode:** (Approximately 10% of transactions will be recorded with an error)
+
+  ```bash
+  npm run start:business -- --with-error
+  ```
+
+### 2. Use the User CLI
+
+The user CLI provides several commands to interact with the ledger.
+
+#### a. Create an Account
+
+This command creates a new account, subtracts an initial deposit (default is 100) from the wallet, and sends a deposit transaction to the business API.
+
+- **Default deposit:**
+
+  ```bash
+  npm run start:user create-account
+  ```
+
+- **Custom deposit (e.g., 200):**
+
+  ```bash
+  npm run start:user create-account -- --deposit 200
+  ```
+
+#### b. Send a Transaction
+
+Submit a transaction to either add money or withdraw money. If you do not supply an `--accountId`, the CLI uses the stored account from the `create-account` command.
+
+- **Add money transaction:**
+
+  ```bash
+  npm run start:user transaction -- --type add_money --amount 50
+  ```
+
+- **Withdraw money transaction:**
+
+  ```bash
+  npm run start:user transaction -- --type withdraw_money --amount 30
+  ```
+
+#### c. Start Autonomous Agent Mode
+
+Launch an autonomous agent that sends random transactions at random intervals using the stored account:
+
 ```bash
-git clone https://github.com/yourusername/ueta-agent-demos.git
-cd ueta-agent-demos
-
-
-### No Error Flow
-
-1 Terminal
-
-```sh
-pnpm start:business 
+npm run start:user agent
 ```
 
-2. Second Terminal
-```sh
-pnpm start:user create-account
-> ts-node user.ts "create-account"
+### 3. View the Ledger
 
-Account created: { id: '6a819a48-a5fe-4c22-878f-0ab578bf9837' }
-(base) andor@magic-pro-3 ueta-agent-demos %
-```
+You can inspect the ledger by making a GET request to the business API:
 
 ```
-(base) andor@magic-pro-3 ueta-agent-demos % pnpm start:user transaction --type add_money --amount 100
-> ledger-app@1.0.0 start:user /Users/andor/workspace/github.com/madeco/ueta-agent-demos
-> ts-node user.ts "transaction" "--type" "add_money" "--amount" "100"
-Transaction created: {
-  id: 'cd50f938-73e8-43d8-95fd-a7eafefb7fb9',
-  amount: 100,
-  date: '2025-03-01T07:58:31.534Z',
-  accountId: '6a819a48-a5fe-4c22-878f-0ab578bf9837'
-}
+http://localhost:4000/ledger
 ```
 
-### Error Flow
+This endpoint returns the complete ledger with all transactions and the latest balances per account.
 
-#### Business Terminal With Errors
+## Project Structure
 
-```sh
-pnpm start:business --with-errors
-```
+- **business.ts** - Business API server that handles ledger transactions and logs activity.
+- **user.ts** - User CLI tool for creating accounts, managing a wallet, and sending transactions (or running as an agent).
+- **package.json** - Contains project scripts and dependencies.
 
-#### User Terminal With Autonomous Transactions
+## License
 
-```sh
-pnpm start:user --agent
+This project is provided as-is under the MIT License.
 ```
