@@ -18,6 +18,10 @@ This repository contains demos that illustrate several aspects of AI-assisted le
 - **Autonomous Agent for Order Placement**  
   - An agent mode automatically places random orders at random intervals, simulating continuous purchasing activity.
 
+## Features
+
+* Audit Tracing -- if `auditableLog` is set true, consumer and producer both maintain logs to mitigate liability.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
