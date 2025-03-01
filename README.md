@@ -32,11 +32,46 @@ Clone the repository:
 git clone https://github.com/yourusername/ueta-agent-demos.git
 cd ueta-agent-demos
 
-```typescript
-ts-node user.ts create-account
+
+### No Error Flow
+
+1 Terminal
+
+```sh
+pnpm start:business 
 ```
 
-```typescript
-ts-node user.ts transaction --type add_money --amount 100
+2. Second Terminal
+```sh
+pnpm start:user create-account
+> ts-node user.ts "create-account"
+
+Account created: { id: '6a819a48-a5fe-4c22-878f-0ab578bf9837' }
+(base) andor@magic-pro-3 ueta-agent-demos %
 ```
 
+```
+(base) andor@magic-pro-3 ueta-agent-demos % pnpm start:user transaction --type add_money --amount 100
+> ledger-app@1.0.0 start:user /Users/andor/workspace/github.com/madeco/ueta-agent-demos
+> ts-node user.ts "transaction" "--type" "add_money" "--amount" "100"
+Transaction created: {
+  id: 'cd50f938-73e8-43d8-95fd-a7eafefb7fb9',
+  amount: 100,
+  date: '2025-03-01T07:58:31.534Z',
+  accountId: '6a819a48-a5fe-4c22-878f-0ab578bf9837'
+}
+```
+
+### Error Flow
+
+#### Business Terminal With Errors
+
+```sh
+pnpm start:business --with-errors
+```
+
+#### User Terminal With Autonomous Transactions
+
+```sh
+pnpm start:user --agent
+```
