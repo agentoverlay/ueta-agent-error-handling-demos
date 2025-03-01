@@ -149,4 +149,3 @@ This endpoint returns the complete ledger with all transactions and the latest b
 ## License
 
 This project is provided as-is under the MIT License.
-```
