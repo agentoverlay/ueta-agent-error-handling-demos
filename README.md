@@ -63,6 +63,12 @@ This repository contains small, focused demos that showcase different aspects of
 - [Node.js](https://nodejs.org/) (version 14 or later)
 - [npm](https://www.npmjs.com/)
 
+## Demo
+
+Work in progress
+
+<img width="1587" alt="image" src="https://github.com/user-attachments/assets/9e15e422-682c-4942-8566-c19ddcc0087d" />
+
 ## Installation
 
 1. Clone the repository.
