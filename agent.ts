@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
 
+import express from "express";
 import { program } from "commander";
 import { v4 as uuid } from "uuid";
 import fetch from "node-fetch";
@@ -11,6 +12,7 @@ const ACCOUNT_FILE = path.join(__dirname, "account.json");
 const STARTING_BALANCE = 1000;
 const AGENT_AUDIT_FILE = path.join(__dirname, "agent_audit.log");
 
+// Helper for agent audit logging.
 function agentAuditLog(message: string) {
     const logLine = `${new Date().toISOString()} - ${message}`;
     if (config.auditableLog) {
@@ -21,7 +23,7 @@ function agentAuditLog(message: string) {
     }
 }
 
-// Create a new account.
+// Command: Create a new account.
 program
     .command("create-account")
     .description("Create a new account with a wallet balance")
@@ -49,10 +51,10 @@ program
         agentAuditLog(`Account created: ${JSON.stringify(account)}`);
     });
 
-// List available products.
+// Command: List available products.
 program
     .command("list-products")
-    .description("List available products")
+    .description("Lis" + "t available products")
     .action(async () => {
         try {
             const response = await fetch("http://localhost:4000/products");
@@ -76,7 +78,7 @@ program
         }
     });
 
-// Place an order.
+// Command: Place an order.
 program
     .command("order")
     .description("Place an order for a product")
@@ -86,6 +88,8 @@ program
         "--accountId <accountId>",
         "Account ID (if not provided, uses stored account)",
     )
+    // Specify agent flag so the business can apply the 1/10 probability check.
+    .option("--agent", "Indicate this order is placed by the agent", false)
     .action(async (options) => {
         let accountId = options.accountId;
         if (!accountId) {
@@ -141,6 +145,7 @@ program
             accountId,
             sku: options.sku,
             quantity: options.quantity,
+            agent: options.agent || false,
         };
         try {
             const response = await fetch("http://localhost:4000/order", {
@@ -170,7 +175,7 @@ program
         }
     });
 
-// Autonomous agent mode.
+// Command: Autonomous agent mode.
 program
     .command("agent")
     .description("Start autonomous agent mode to place random orders")
@@ -227,6 +232,7 @@ program
                 accountId: account.id,
                 sku: product.sku,
                 quantity,
+                agent: true,
             };
             try {
                 const response = await fetch("http://localhost:4000/order", {
@@ -269,6 +275,151 @@ program
             }
         }
         agentLoop();
+    });
+
+program
+    .command("dashboard")
+    .description(
+        "Launch the agent dashboard to view pending orders and overall stats",
+    )
+    .option(
+        "--port <port>",
+        "Port for the agent dashboard",
+        (val) => parseInt(val),
+        6001,
+    )
+    .action(async (options) => {
+        if (!fs.existsSync(ACCOUNT_FILE)) {
+            console.error(
+                'No account found. Create an account first using "create-account".',
+            );
+            process.exit(1);
+        }
+        const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
+        const account = JSON.parse(accountData);
+        const appDashboard = express();
+        appDashboard.use(express.json());
+        appDashboard.use(express.urlencoded({ extended: true }));
+
+        appDashboard.get("/dashboard", async (req, res) => {
+            try {
+                // Fetch pending orders.
+                const pendingResponse = await fetch(
+                    "http://localhost:4000/pending",
+                );
+                if (!pendingResponse.ok) {
+                    res.send(
+                        "Error fetching pending orders from business API.",
+                    );
+                    return;
+                }
+                const pendingOrders = await pendingResponse.json();
+                // Filter orders for this agent's account.
+                const myPending = pendingOrders.filter(
+                    (order: any) => order.accountId === account.id,
+                );
+
+                // Calculate agent pending totals.
+                const totalPending = myPending.length;
+                const totalPendingAmount = myPending.reduce(
+                    (sum: number, order: any) => sum + order.totalPrice,
+                    0,
+                );
+
+                // Fetch overall stats.
+                const statsResponse = await fetch(
+                    "http://localhost:4000/stats",
+                );
+                const stats = statsResponse.ok
+                    ? await statsResponse.json()
+                    : { totalOrders: 0, totalAmountPaid: 0 };
+
+                let html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Agent Dashboard</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { text-align: left; padding: 8px; border: 1px solid #ddd; }
+              tr:nth-child(even){ background-color: #f2f2f2; }
+              th { background-color: #4CAF50; color: white; }
+              button { padding: 5px 10px; }
+            </style>
+          </head>
+          <body>
+            <h1>Agent Dashboard</h1>
+            <p>Pending Orders: ${totalPending} | Pending Total Amount: ${totalPendingAmount}</p>
+            <p>Overall Delivered Orders: ${stats.totalOrders} | Total Amount Paid: ${stats.totalAmountPaid}</p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>SKU</th>
+                  <th>Quantity</th>
+                  <th>Total Price</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+                if (myPending.length === 0) {
+                    html += `<tr><td colspan="6" style="text-align:center;">No pending orders</td></tr>`;
+                } else {
+                    myPending.forEach((order: any) => {
+                        html += `<tr id="row-${order.id}">
+                      <td>${order.id}</td>
+                      <td>${order.sku}</td>
+                      <td>${order.quantity}</td>
+                      <td>${order.totalPrice}</td>
+                      <td>${order.status}</td>
+                      <td>
+                        <button onclick="approveOrder('${order.id}')">Approve</button>
+                      </td>
+                    </tr>`;
+                    });
+                }
+                html += `
+              </tbody>
+            </table>
+            <script>
+              async function approveOrder(orderId) {
+                if (!confirm('Approve order ' + orderId + '?')) return;
+                try {
+                  const response = await fetch('http://localhost:4000/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId })
+                  });
+                  const result = await response.json();
+                  if (response.ok) {
+                    alert('Order approved successfully.');
+                    const row = document.getElementById('row-' + orderId);
+                    if (row) row.remove();
+                    location.reload();
+                  } else {
+                    alert('Error: ' + JSON.stringify(result));
+                  }
+                } catch (err) {
+                  alert('Error approving order: ' + err);
+                }
+              }
+            </script>
+          </body>
+          </html>
+        `;
+                res.send(html);
+            } catch (err) {
+                res.send("Error loading dashboard: " + err);
+            }
+        });
+
+        const port = options.port;
+        appDashboard.listen(port, () => {
+            console.log(`Agent dashboard listening on port ${port}`);
+        });
     });
 
 program.parse(process.argv);

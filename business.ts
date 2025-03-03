@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { v4 as uuid } from "uuid";
 import fs from "fs";
 import fetch from "node-fetch";
@@ -28,7 +29,7 @@ type Order = {
 };
 
 const withError = process.argv.includes("--with-error");
-// Human service port is determined by the environment variable (default to 5002).
+// Human service port is determined by the environment variable (default to 5002)
 const HUMAN_SERVICE_PORT = process.env.HUMAN_PORT
     ? process.env.HUMAN_PORT
     : "5002";
@@ -51,6 +52,7 @@ function auditLog(message: string) {
 }
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 // --- Public Endpoints ---
@@ -60,7 +62,7 @@ app.get("/products", (req, res) => {
     res.json(products);
 });
 
-// Return all orders (for audit purposes).
+// Return all orders.
 app.get("/orders", (req, res) => {
     res.json(orders);
 });
@@ -71,6 +73,17 @@ app.get("/pending", (req, res) => {
         (o) => o.status === "pending_confirmation",
     );
     res.json(pendingOrders);
+});
+
+// New endpoint: Return overall statistics.
+app.get("/stats", (req, res) => {
+    const deliveredOrders = orders.filter((o) => o.status === "delivered");
+    const totalOrders = deliveredOrders.length;
+    const totalAmountPaid = deliveredOrders.reduce(
+        (sum, o) => sum + o.totalPrice,
+        0,
+    );
+    res.json({ totalOrders, totalAmountPaid });
 });
 
 // --- Approval Endpoint ---
@@ -92,7 +105,7 @@ app.post("/approve", (req, res) => {
 
 // --- Order Endpoint ---
 app.post("/order", async (req, res) => {
-    const { accountId, sku, quantity } = req.body;
+    const { accountId, sku, quantity, agent } = req.body;
     if (!accountId || !sku || typeof quantity !== "number" || quantity <= 0) {
         return res.status(400).json({ error: "Invalid payload" });
     }
@@ -111,7 +124,7 @@ app.post("/order", async (req, res) => {
         status: "received",
     };
 
-    // Simulate an error ~10% of the time when error simulation is enabled.
+    // Simulate error ~10% of the time if withError is active.
     if (withError && Math.random() < 0.1) {
         order.error = "Simulated error in order processing";
         order.status = "error";
@@ -132,29 +145,55 @@ app.post("/order", async (req, res) => {
         return res.status(201).json(order);
     }
 
-    // Handle progressive confirmation.
-    if (config.progressiveConfirmation) {
-        order.status = "pending_confirmation";
-        orders.push(order);
-        auditLog(`Order pending approval: ${JSON.stringify(order)}`);
-        // Notify the human service about the pending order.
-        try {
-            await fetch(`http://localhost:${HUMAN_SERVICE_PORT}/flag`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(order),
-            });
-            auditLog(`Notified human service of pending order ${order.id}`);
-        } catch (err) {
-            auditLog(
-                `Failed to notify human service for order ${order.id}: ${err}`,
-            );
+    // Determine approval requirement.
+    if (agent === true) {
+        // For agent orders, use progressive confirmation if enabled or 1/10 probability.
+        if (config.progressiveConfirmation || Math.random() < 0.1) {
+            order.status = "pending_confirmation";
+            orders.push(order);
+            auditLog(`Agent order pending approval: ${JSON.stringify(order)}`);
+            try {
+                await fetch(`http://localhost:${HUMAN_SERVICE_PORT}/flag`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(order),
+                });
+                auditLog(
+                    `Notified human service of pending agent order ${order.id}`,
+                );
+            } catch (err) {
+                auditLog(
+                    `Failed to notify human service for agent order ${order.id}: ${err}`,
+                );
+            }
+        } else {
+            order.status = "delivered";
+            orders.push(order);
+            auditLog(`Agent order delivered: ${JSON.stringify(order)}`);
         }
     } else {
-        // Auto-confirm mode: deliver order after a short delay.
-        order.status = "delivered";
-        orders.push(order);
-        auditLog(`Order delivered: ${JSON.stringify(order)}`);
+        // For normal orders.
+        if (config.progressiveConfirmation) {
+            order.status = "pending_confirmation";
+            orders.push(order);
+            auditLog(`Order pending approval: ${JSON.stringify(order)}`);
+            try {
+                await fetch(`http://localhost:${HUMAN_SERVICE_PORT}/flag`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(order),
+                });
+                auditLog(`Notified human service of pending order ${order.id}`);
+            } catch (err) {
+                auditLog(
+                    `Failed to notify human service for order ${order.id}: ${err}`,
+                );
+            }
+        } else {
+            order.status = "delivered";
+            orders.push(order);
+            auditLog(`Order delivered: ${JSON.stringify(order)}`);
+        }
     }
 
     return res.status(201).json(order);

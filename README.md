@@ -1,55 +1,45 @@
 # UETA Agent -- Goods Producer Demo
 
-This repository showcases how AI-driven agents can integrate with legal
-frameworks and electronic transactions in the context of a modern goods
-producer. Inspired by Section 10 of the UETA (Uniform Electronic Transactions
-Act), the demo features a business API that offers a product catalog and
-processes orders, while a command-line tool allows users to manage a digital
-wallet and place orders. The system emphasizes robust error handling,
-auditability, and progressive confirmation of transactions.
+This repository showcases how AI-driven agents can integrate with legal frameworks and electronic transactions in the context of a modern goods producer. Inspired by Section 10 of the UETA (Uniform Electronic Transactions Act), the demo features a business API that offers a product catalog and processes orders, while both an autonomous agent (with a dashboard) and a human operator (with a separate dashboard) can interact with transactions. The system emphasizes robust error handling, auditability, and progressive confirmation of transactions—occasionally requiring manual approval (with a 1/10 probability for agent orders) before orders are finalized.
 
-Developed in collaboration between Dazza Greenwood and Andor Kesselman, this
-project builds on the insights presented in [UETA and LLM Agents: A Deep Dive
-into Legal Error
-Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into).
-In that article, the author explores the challenges and opportunities in merging
-AI-assisted legal processes with electronic transactions, including
-transparency, accountability, and the need for clear error correction workflows.
-This demo reflects those principles, integrating technical and legal nuances to
-simulate a secure and auditable digital commerce system.
+Developed in collaboration between Dazza Greenwood and Andor Kesselman, this project builds on the insights presented in [UETA and LLM Agents: A Deep Dive into Legal Error Handling](https://www.dazzagreenwood.com/p/ueta-and-llm-agents-a-deep-dive-into). In that article, the author explores the challenges and opportunities in merging AI-assisted legal processes with electronic transactions, including transparency, accountability, and the need for clear error correction workflows. This demo reflects those principles, integrating technical and legal nuances to simulate a secure and auditable digital commerce system.
 
 ## 📌 Overview
 
 This repository contains demos that illustrate several aspects of AI-assisted legal transactions and goods ordering:
 
 - **Product Catalog and Order Processing**  
-  - The business API acts as a goods producer, providing a catalog of products (SKU, description, and price) and processing orders from users.
-- **Error Simulation in Order Processing**  
-  - An optional error simulation mode (activated with a flag) randomly fails approximately 10% of orders, logging errors accordingly.
+  - The business API acts as a goods producer, providing a catalog of products (SKU, description, and price) and processing orders from users and agents.
+- **Error Simulation and Approval**  
+  - An optional error simulation mode (activated with a flag) randomly fails approximately 10% of orders. Additionally, agent orders have a 1/10 chance of requiring manual approval before being finalized.
 - **User Wallet and Order Transactions**  
-  - The user CLI maintains a wallet with a starting balance. Orders placed deduct funds from the wallet based on product prices.
-- **Autonomous Agent for Order Placement**  
-  - An agent mode automatically places random orders at random intervals, simulating continuous purchasing activity.
+  - Users (or agents) maintain a digital wallet. Orders deduct funds from the wallet based on product prices.
+- **Autonomous Agent with Dashboard**  
+  - An agent mode automatically places random orders and also provides a dashboard to view pending (i.e. pre-approved) transactions.
+- **Human Intervention Dashboard**  
+  - A separate human service provides a dashboard where flagged orders are listed, allowing a human operator to approve pending transactions or revert error orders.
 
 ## Features
 
-* Audit Tracing -- if `auditableLog` is set true, consumer and producer both maintain logs to mitigate liability.
+* **Audit Tracing** — If `auditableLog` is set to true, both the producer and consumer maintain logs to mitigate liability.
+* **Progressive Confirmation** — When enabled (via config or random chance for agent orders), transactions are held pending approval.
+* **Dashboards for Agents and Humans** — Agents can view their pending orders via a dedicated dashboard, while human operators can review and act on flagged transactions.
 
 ### Roadmap
 
-* Progressive Confirmation
-* Detection Mechanisms
-* Error Correction -- Prompt User When An Error Happens. Ideally measures results.
+* Enhanced Progressive Confirmation
+* Improved Detection Mechanisms
+* Error Correction Workflows
 * System State Tracking
-* Two and Three Party Agreements
+* Support for Two- and Three-Party Agreements
 
- 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (version 14 or later)
-- [npm](https://www.npmjs.com/)
+-
+ [Node.js](https://nodejs.org/) (version 14 or later)
+- [pnpm](https://pnpm.io/)
 
 ## Demo
 
@@ -62,7 +52,7 @@ This repository contains demos that illustrate several aspects of AI-assisted le
 2. Install dependencies by running:
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 ## Running the Application
@@ -74,33 +64,33 @@ The business API simulates a goods producer by offering a product catalog and pr
 - **Normal mode:**
 
   ```bash
-  npm run start:business
+  pnpm run start:business
   ```
 
-- **Error simulation mode:** (Approximately 10% of orders will trigger a simulated error)
+- **Error simulation mode:** (Approximately 10% of orders will trigger a simulated error or require approval)
 
   ```bash
-  npm run start:business -- --with-error
+  pnpm run start:business -- --with-error
   ```
 
-### 2. Use the User CLI
+### 2. Use the Agent CLI & Dashboard
 
-The user CLI lets you create an account with a wallet, list available products, place orders, and run an autonomous agent that places random orders.
+The agent CLI lets you create an account with a wallet, list available products, place orders (with a 1/10 probability that approval is required), and run autonomous agent mode. A dashboard is also available to view pending orders for your account.
 
 #### a. Create an Account
 
-This command creates a new account with a wallet. Each new user starts with a balance of 1000. You can also deduct an initial deposit (default: 100) if desired.
+This command creates a new account with a wallet. Each new agent starts with a balance of 1000. You can also deduct an initial deposit (default: 100) if desired.
 
 - **Default deposit:**
 
   ```bash
-  npm run start:user create-account
+  pnpm run start:agent create-account
   ```
 
 - **Custom deposit (e.g., 200):**
 
   ```bash
-  npm run start:user create-account -- --deposit 200
+  pnpm run start:agent create-account -- --deposit 200
   ```
 
 #### b. List Available Products
@@ -108,35 +98,66 @@ This command creates a new account with a wallet. Each new user starts with a ba
 Display the product catalog from the business API:
 
 ```bash
-npm run start:user list-products
+pnpm run start:agent list-products
 ```
 
 #### c. Place an Order
 
-Submit an order by specifying the product SKU and quantity. The CLI checks your wallet balance before placing the order. For example, to order 2 units of the product with SKU `SKU001`:
+Submit an order by specifying the product SKU and quantity. Use the `--agent` flag to indicate the order is placed by the agent. For example, to order 2 units of the product with SKU `SKU001`:
 
 ```bash
-npm run start:user order -- --sku SKU001 --quantity 2
+pnpm run start:agent order -- --sku SKU001 --quantity 2 --agent
 ```
 
 #### d. Start Autonomous Agent Mode
 
-Launch the autonomous agent mode, which automatically places random orders at random intervals using your stored account:
+Launch autonomous agent mode, which automatically places random orders at random intervals:
 
 ```bash
-npm run start:user agent
+pnpm run start:agent agent
 ```
 
-### 3. View Order Logs
+#### e. Launch the Agent Dashboard
 
-While there is no dedicated API endpoint for orders, you can view order processing details (including simulated errors) in the terminal where the business API is running. In error simulation mode, faulty orders will be logged using `console.error` along with the latest order status for the account.
+View pending (pre-approved) orders for your account via a dashboard. By default, the dashboard runs on port **6001**:
+
+```bash
+pnpm run start:agent dashboard
+```
+
+### 3. Use the Human Intervention Dashboard
+
+The human service provides a dashboard (accessible via a web browser) where flagged orders are listed. Here, a human operator can:
+- **Approve** pending transactions (moving them from `pending_confirmation` to `delivered`).
+- **Revert** orders that encountered errors.
+
+The human service listens on a configurable port (default **5002**). To change it, set the environment variable `HUMAN_PORT`.
+
+To start the human service:
+
+```bash
+pnpm run start:human
+```
+
+Then, access the dashboard at:  
+```
+http://localhost:5002/dashboard
+```
+
+### 4. Viewing Order Logs
+
+Logs for both the business and agent sides are maintained (if enabled via `auditableLog`) to support audit tracing and error correction.
 
 ## Project Structure
 
 - **business.ts**  
-  The business API server simulates a goods producer. It maintains a catalog of products, processes orders (with optional error simulation), and logs order statuses.
-- **user.ts**  
-  The user CLI tool allows you to create accounts, manage a wallet, list products, place orders, and run an autonomous agent for order placement.
+  The business API server simulates a goods producer. It maintains a product catalog, processes orders (with optional error simulation and approval requirements), and logs transaction statuses.
+- **agent.ts**  
+  The agent CLI tool allows account creation, wallet management, product listing, order placement, autonomous order placement, and includes a dashboard for viewing pending orders.
+- **human.ts**  
+  The human service provides a dashboard for reviewing flagged orders and supports approving or reverting transactions.
+- **config.ts**  
+  Contains configuration settings that control logging, progressive confirmation, and monitoring.
 - **package.json**  
   Contains project scripts and dependencies.
 

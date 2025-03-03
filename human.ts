@@ -7,7 +7,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// In-memory storage for flagged orders.
 let flaggedOrders: any[] = [];
 
 // Helper for human-side audit logging.
@@ -19,20 +18,20 @@ function humanAuditLog(message: string) {
     }
 }
 
-// Endpoint for the business API to flag an order (either error or pending approval).
+// Endpoint for the business API to flag an order.
 app.post("/flag", (req, res) => {
     const flaggedOrder = req.body;
     if (!flaggedOrder || !flaggedOrder.id) {
         return res.status(400).json({ error: "Invalid flagged order payload" });
     }
-    // Update flaggedOrders: replace any existing order with the same ID.
+    // Replace any existing order with the same ID.
     flaggedOrders = flaggedOrders.filter((o) => o.id !== flaggedOrder.id);
     flaggedOrders.push(flaggedOrder);
     humanAuditLog(`Order flagged: ${JSON.stringify(flaggedOrder)}`);
     res.status(200).json({ message: "Flag received", order: flaggedOrder });
 });
 
-// Endpoint to revert a flagged order (for orders with errors).
+// Endpoint to revert a flagged order.
 app.post("/revert", async (req, res) => {
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ error: "orderId is required" });
@@ -157,7 +156,7 @@ app.get("/dashboard", (req, res) => {
       </table>
       <script>
         async function approveOrder(orderId) {
-          if (!confirm('Approve order ' + orderId + '?')) return;
+          if (!confirm('Are you sure you want to approve order ' + orderId + '?')) return;
           try {
             const response = await fetch('/approve', {
               method: 'POST',
@@ -178,7 +177,7 @@ app.get("/dashboard", (req, res) => {
         }
 
         async function revertOrder(orderId) {
-          if (!confirm('Revert order ' + orderId + '?')) return;
+          if (!confirm('Are you sure you want to revert order ' + orderId + '?')) return;
           try {
             const response = await fetch('/revert', {
               method: 'POST',
