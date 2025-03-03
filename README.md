@@ -63,13 +63,13 @@ The business API simulates a goods producer by offering a product catalog and pr
 - **Normal mode:**
 
   ```bash
-  pnpm run start:business
+  pnpm run start:seller
   ```
 
 - **Error simulation mode:** (Approximately 10% of orders will trigger a simulated error or require approval)
 
   ```bash
-  pnpm run start:business -- --with-error
+  pnpm run start:seller -- --with-error
   ```
 
 ### 2. Use the Agent CLI & Dashboard
