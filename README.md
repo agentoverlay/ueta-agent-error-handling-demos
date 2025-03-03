@@ -37,7 +37,6 @@ This repository contains demos that illustrate several aspects of AI-assisted le
 
 ### Prerequisites
 
--
  [Node.js](https://nodejs.org/) (version 14 or later)
 - [pnpm](https://pnpm.io/)
 
@@ -125,6 +124,8 @@ View pending (pre-approved) orders for your account via a dashboard. By default,
 pnpm run start:agent dashboard
 ```
 
+<img width="1785" alt="image" src="https://github.com/user-attachments/assets/f2b7b947-5dec-48d3-83b8-e94a208ac317" />
+
 ### 3. Use the Human Intervention Dashboard
 
 The human service provides a dashboard (accessible via a web browser) where flagged orders are listed. Here, a human operator can:
@@ -143,6 +144,9 @@ Then, access the dashboard at:
 ```
 http://localhost:5002/dashboard
 ```
+
+<img width="1785" alt="image" src="https://github.com/user-attachments/assets/80196682-4ab5-42f0-a1f9-49c00eedebd0" />
+
 
 ### 4. Viewing Order Logs
 
