@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Line } from "react-chartjs-2";
@@ -81,7 +81,8 @@ export const UetaLiabilityCalculator = () => {
   const cappedDiscount = Math.min(totalDiscount, 0.5);
   const adjustedMonthlyLiability = baseMonthlyLiability * (1 - cappedDiscount);
   const annualLiability = adjustedMonthlyLiability * 12;
-  const liabilityPercentage = calculateLiabilityPercentage(transactionsPerMonth);
+  const liabilityPercentage =
+    calculateLiabilityPercentage(transactionsPerMonth);
 
   // Handler for mitigation checkboxes
   const handleMitigationChange = (index: number) => {
@@ -146,14 +147,20 @@ export const UetaLiabilityCalculator = () => {
       ["Claim Probability (%)", claimProbability],
       ["Average Transaction Value ($)", averageTransactionValue],
       ["Average Claim Cost ($)", averageClaimCost],
-      ["Monthly Liability ($)", adjustedMonthlyLiability.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })],
-      ["Annual Liability ($)", annualLiability.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })],
+      [
+        "Monthly Liability ($)",
+        adjustedMonthlyLiability.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      ],
+      [
+        "Annual Liability ($)",
+        annualLiability.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      ],
       ["Liability as % of Revenue", liabilityPercentage.toFixed(2) + "%"],
     ];
 
@@ -173,12 +180,12 @@ export const UetaLiabilityCalculator = () => {
   const liabilityData = transactionValues.map(
     (val) => calculateLiability(val) * (1 - cappedDiscount),
   );
-  const liabilityPercentageData = transactionValues.map(
-    (val) => calculateLiabilityPercentage(val),
+  const liabilityPercentageData = transactionValues.map((val) =>
+    calculateLiabilityPercentage(val),
   );
 
   const chartData = {
-    labels: transactionValues.map(val => val.toLocaleString()),
+    labels: transactionValues.map((val) => val.toLocaleString()),
     datasets: [
       {
         label: "Monthly Liability ($)",
@@ -189,7 +196,7 @@ export const UetaLiabilityCalculator = () => {
         borderWidth: 2,
         pointBackgroundColor: "#EF4444",
         pointRadius: 4,
-        yAxisID: 'y',
+        yAxisID: "y",
       },
       {
         label: "Liability as % of Revenue",
@@ -200,8 +207,8 @@ export const UetaLiabilityCalculator = () => {
         borderWidth: 2,
         pointBackgroundColor: "#8B5CF6",
         pointRadius: 4,
-        yAxisID: 'y1',
-      }
+        yAxisID: "y1",
+      },
     ],
   };
 
@@ -210,7 +217,7 @@ export const UetaLiabilityCalculator = () => {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
-      mode: 'index' as const,
+      mode: "index" as const,
       intersect: false,
     },
     plugins: {
@@ -223,27 +230,27 @@ export const UetaLiabilityCalculator = () => {
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
-            let label = context.dataset.label || '';
+          label: function (context: any) {
+            let label = context.dataset.label || "";
             if (label) {
-              label += ': ';
+              label += ": ";
             }
             if (context.parsed.y !== null) {
-              if (context.dataset.yAxisID === 'y') {
-                label += new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
+              if (context.dataset.yAxisID === "y") {
+                label += new Intl.NumberFormat("en-US", {
+                  style: "currency",
+                  currency: "USD",
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
                 }).format(context.parsed.y);
               } else {
-                label += context.parsed.y.toFixed(2) + '%';
+                label += context.parsed.y.toFixed(2) + "%";
               }
             }
             return label;
-          }
-        }
-      }
+          },
+        },
+      },
     },
     scales: {
       x: {
@@ -253,24 +260,24 @@ export const UetaLiabilityCalculator = () => {
         },
       },
       y: {
-        type: 'linear' as const,
+        type: "linear" as const,
         display: true,
-        position: 'left' as const,
+        position: "left" as const,
         title: {
           display: true,
           text: "Liability ($)",
         },
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
+          callback: function (value: any) {
             return "$" + value.toLocaleString();
           },
         },
       },
       y1: {
-        type: 'linear' as const,
+        type: "linear" as const,
         display: true,
-        position: 'right' as const,
+        position: "right" as const,
         grid: {
           drawOnChartArea: false,
         },
@@ -280,8 +287,8 @@ export const UetaLiabilityCalculator = () => {
         },
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
-            return value.toFixed(1) + '%';
+          callback: function (value: any) {
+            return value.toFixed(1) + "%";
           },
         },
       },
@@ -290,31 +297,62 @@ export const UetaLiabilityCalculator = () => {
 
   return (
     <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px" }}>
-      <h1 style={{ fontSize: "24px", fontWeight: "bold", textAlign: "center", marginBottom: "24px" }}>
+      <h1
+        style={{
+          fontSize: "24px",
+          fontWeight: "bold",
+          textAlign: "center",
+          marginBottom: "24px",
+        }}
+      >
         UETA Liability Calculator
       </h1>
-      
+
       {/* Two-column layout with direct styles */}
-      <div style={{ 
-        display: "grid", 
-        gridTemplateColumns: "repeat(auto-fit, minmax(500px, 1fr))", 
-        gap: "24px",
-      }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(500px, 1fr))",
+          gap: "24px",
+        }}
+      >
         {/* Left column - Inputs */}
-        <div style={{ 
-          backgroundColor: "white", 
-          borderRadius: "8px", 
-          padding: "20px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-        }}>
-          <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>Input Parameters</h2>
-          
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "8px",
+            padding: "20px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "18px",
+              fontWeight: "600",
+              marginBottom: "16px",
+            }}
+          >
+            Input Parameters
+          </h2>
+
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+          >
             {/* Transactions per Month */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                <label style={{ fontWeight: "500" }}>Transactions per Month</label>
-                <span style={{ fontWeight: "600" }}>{transactionsPerMonth.toLocaleString()}</span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
+                <label style={{ fontWeight: "500" }}>
+                  Transactions per Month
+                </label>
+                <span style={{ fontWeight: "600" }}>
+                  {transactionsPerMonth.toLocaleString()}
+                </span>
               </div>
               <input
                 type="range"
@@ -322,38 +360,74 @@ export const UetaLiabilityCalculator = () => {
                 max="1000000"
                 step="1000"
                 value={transactionsPerMonth}
-                onChange={(e) => setTransactionsPerMonth(Number(e.target.value))}
+                onChange={(e) =>
+                  setTransactionsPerMonth(Number(e.target.value))
+                }
                 style={{ width: "100%" }}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#6B7280" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "4px",
+                  fontSize: "12px",
+                  color: "#6B7280",
+                }}
+              >
                 <span>1,000</span>
                 <span>1,000,000</span>
               </div>
             </div>
-            
+
             {/* Agent-Handled Percentage */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                <label style={{ fontWeight: "500" }}>Agent-Handled Percentage</label>
-                <span style={{ fontWeight: "600" }}>{agentHandledPercentage}%</span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
+                <label style={{ fontWeight: "500" }}>
+                  Agent-Handled Percentage
+                </label>
+                <span style={{ fontWeight: "600" }}>
+                  {agentHandledPercentage}%
+                </span>
               </div>
               <input
                 type="range"
                 min="0"
                 max="100"
                 value={agentHandledPercentage}
-                onChange={(e) => setAgentHandledPercentage(Number(e.target.value))}
+                onChange={(e) =>
+                  setAgentHandledPercentage(Number(e.target.value))
+                }
                 style={{ width: "100%" }}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#6B7280" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "4px",
+                  fontSize: "12px",
+                  color: "#6B7280",
+                }}
+              >
                 <span>0%</span>
                 <span>100%</span>
               </div>
             </div>
-            
+
             {/* Error Rate */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
                 <label style={{ fontWeight: "500" }}>Error Rate</label>
                 <span style={{ fontWeight: "600" }}>{errorRate}%</span>
               </div>
@@ -366,15 +440,29 @@ export const UetaLiabilityCalculator = () => {
                 onChange={(e) => setErrorRate(Number(e.target.value))}
                 style={{ width: "100%" }}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#6B7280" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "4px",
+                  fontSize: "12px",
+                  color: "#6B7280",
+                }}
+              >
                 <span>0%</span>
                 <span>10%</span>
               </div>
             </div>
-            
+
             {/* Claim Probability */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
                 <label style={{ fontWeight: "500" }}>Claim Probability</label>
                 <span style={{ fontWeight: "600" }}>{claimProbability}%</span>
               </div>
@@ -386,17 +474,35 @@ export const UetaLiabilityCalculator = () => {
                 onChange={(e) => setClaimProbability(Number(e.target.value))}
                 style={{ width: "100%" }}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#6B7280" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "4px",
+                  fontSize: "12px",
+                  color: "#6B7280",
+                }}
+              >
                 <span>0%</span>
                 <span>100%</span>
               </div>
             </div>
-            
+
             {/* Average Transaction Value */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                <label style={{ fontWeight: "500" }}>Average Transaction Value</label>
-                <span style={{ fontWeight: "600" }}>${averageTransactionValue}</span>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
+                <label style={{ fontWeight: "500" }}>
+                  Average Transaction Value
+                </label>
+                <span style={{ fontWeight: "600" }}>
+                  ${averageTransactionValue}
+                </span>
               </div>
               <input
                 type="range"
@@ -404,18 +510,34 @@ export const UetaLiabilityCalculator = () => {
                 max="1000"
                 step="10"
                 value={averageTransactionValue}
-                onChange={(e) => setAverageTransactionValue(Number(e.target.value))}
+                onChange={(e) =>
+                  setAverageTransactionValue(Number(e.target.value))
+                }
                 style={{ width: "100%" }}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#6B7280" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "4px",
+                  fontSize: "12px",
+                  color: "#6B7280",
+                }}
+              >
                 <span>$10</span>
                 <span>$1,000</span>
               </div>
             </div>
-            
+
             {/* Average Claim Cost */}
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
                 <label style={{ fontWeight: "500" }}>Average Claim Cost</label>
                 <span style={{ fontWeight: "600" }}>${averageClaimCost}</span>
               </div>
@@ -428,29 +550,50 @@ export const UetaLiabilityCalculator = () => {
                 onChange={(e) => setAverageClaimCost(Number(e.target.value))}
                 style={{ width: "100%" }}
               />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "12px", color: "#6B7280" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "4px",
+                  fontSize: "12px",
+                  color: "#6B7280",
+                }}
+              >
                 <span>$0</span>
                 <span>$5,000</span>
               </div>
             </div>
           </div>
-          
+
           {/* Mitigation Strategies */}
           <div style={{ marginTop: "24px" }}>
-            <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "12px" }}>Mitigation Strategies</h3>
-            <div style={{ 
-              backgroundColor: "#F9FAFB", 
-              padding: "16px", 
-              borderRadius: "8px" 
-            }}>
+            <h3
+              style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                marginBottom: "12px",
+              }}
+            >
+              Mitigation Strategies
+            </h3>
+            <div
+              style={{
+                backgroundColor: "#F9FAFB",
+                padding: "16px",
+                borderRadius: "8px",
+              }}
+            >
               {mitigations.map((mitigation, index) => (
-                <div 
-                  key={index} 
-                  style={{ 
-                    display: "flex", 
-                    justifyContent: "space-between", 
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
                     padding: "8px 0",
-                    borderBottom: index < mitigations.length - 1 ? "1px solid #E5E7EB" : "none"
+                    borderBottom:
+                      index < mitigations.length - 1
+                        ? "1px solid #E5E7EB"
+                        : "none",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center" }}>
@@ -467,74 +610,125 @@ export const UetaLiabilityCalculator = () => {
                   </span>
                 </div>
               ))}
-              <p style={{ fontSize: "12px", color: "#6B7280", marginTop: "12px", fontStyle: "italic" }}>
+              <p
+                style={{
+                  fontSize: "12px",
+                  color: "#6B7280",
+                  marginTop: "12px",
+                  fontStyle: "italic",
+                }}
+              >
                 Total mitigation discount is capped at 50%
               </p>
             </div>
           </div>
-          
+
           {/* Results */}
-          <div style={{ 
-            marginTop: "24px", 
-            backgroundColor: "#EFF6FF", 
-            padding: "16px", 
-            borderRadius: "8px" 
-          }}>
-            <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "12px" }}>Results</h3>
-            <div style={{ 
-              display: "grid", 
-              gridTemplateColumns: "1fr 1fr", 
-              gap: "16px",
-              marginBottom: "12px"
-            }}>
-              <div style={{ 
-                backgroundColor: "white", 
-                padding: "12px", 
-                borderRadius: "8px",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
-              }}>
-                <div style={{ fontSize: "12px", color: "#6B7280" }}>Monthly Liability</div>
-                <div style={{ fontSize: "18px", fontWeight: "700", color: "#DC2626" }}>
-                  ${adjustedMonthlyLiability.toLocaleString(undefined, {
+          <div
+            style={{
+              marginTop: "24px",
+              backgroundColor: "#EFF6FF",
+              padding: "16px",
+              borderRadius: "8px",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "16px",
+                fontWeight: "600",
+                marginBottom: "12px",
+              }}
+            >
+              Results
+            </h3>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "16px",
+                marginBottom: "12px",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "white",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                  Monthly Liability
+                </div>
+                <div
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "700",
+                    color: "#DC2626",
+                  }}
+                >
+                  $
+                  {adjustedMonthlyLiability.toLocaleString(undefined, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
                 </div>
               </div>
-              <div style={{ 
-                backgroundColor: "white", 
-                padding: "12px", 
-                borderRadius: "8px",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
-              }}>
-                <div style={{ fontSize: "12px", color: "#6B7280" }}>Annual Liability</div>
-                <div style={{ fontSize: "18px", fontWeight: "700", color: "#DC2626" }}>
-                  ${annualLiability.toLocaleString(undefined, {
+              <div
+                style={{
+                  backgroundColor: "white",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                  Annual Liability
+                </div>
+                <div
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "700",
+                    color: "#DC2626",
+                  }}
+                >
+                  $
+                  {annualLiability.toLocaleString(undefined, {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
                   })}
                 </div>
               </div>
-              <div style={{ 
-                backgroundColor: "white", 
-                padding: "12px", 
-                borderRadius: "8px",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                gridColumn: "span 2"
-              }}>
-                <div style={{ fontSize: "12px", color: "#6B7280" }}>Liability as % of Revenue</div>
-                <div style={{ fontSize: "18px", fontWeight: "700", color: "#8B5CF6" }}>
+              <div
+                style={{
+                  backgroundColor: "white",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                  gridColumn: "span 2",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "#6B7280" }}>
+                  Liability as % of Revenue
+                </div>
+                <div
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "700",
+                    color: "#8B5CF6",
+                  }}
+                >
                   {liabilityPercentage.toFixed(2)}%
                 </div>
               </div>
             </div>
           </div>
-          
+
           {/* Export Buttons */}
           <div style={{ marginTop: "24px", display: "flex", gap: "16px" }}>
             <button
               onClick={exportCSV}
-              style={{ 
+              style={{
                 flex: 1,
                 padding: "8px 0",
                 backgroundColor: "#2563EB",
@@ -542,14 +736,14 @@ export const UetaLiabilityCalculator = () => {
                 border: "none",
                 borderRadius: "6px",
                 fontWeight: "500",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Export CSV
             </button>
             <button
               onClick={exportPDF}
-              style={{ 
+              style={{
                 flex: 1,
                 padding: "8px 0",
                 backgroundColor: "#059669",
@@ -557,22 +751,32 @@ export const UetaLiabilityCalculator = () => {
                 border: "none",
                 borderRadius: "6px",
                 fontWeight: "500",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             >
               Export PDF
             </button>
           </div>
         </div>
-        
+
         {/* Right column - Graph */}
-        <div style={{ 
-          backgroundColor: "white", 
-          borderRadius: "8px", 
-          padding: "20px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-        }}>
-          <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>Liability Projection</h2>
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "8px",
+            padding: "20px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "18px",
+              fontWeight: "600",
+              marginBottom: "16px",
+            }}
+          >
+            Liability Projection
+          </h2>
           <div style={{ height: "500px" }}>
             <Line data={chartData} options={chartOptions} />
           </div>
