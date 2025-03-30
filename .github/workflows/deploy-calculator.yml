@@ -4,8 +4,8 @@ on:
     branches:
       - main
     paths:
-      - 'ueta-liability-calculator/**'
-      - '.github/workflows/deploy-calculator.yml'
+      - "ueta-liability-calculator/**"
+      - ".github/workflows/deploy-calculator.yml"
   workflow_dispatch:
 
 jobs:
@@ -53,5 +53,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-`
-}
