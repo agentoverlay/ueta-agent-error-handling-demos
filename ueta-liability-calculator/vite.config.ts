@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // Get the repository name from package.json or environment variables
 const getRepositoryName = () => {
-  return '/
+  return '/'
 }
 
 // https://vite.dev/config/
