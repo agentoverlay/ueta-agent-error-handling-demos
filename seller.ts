@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import fs from "fs";
 import fetch from "node-fetch";
 import { config } from "./config";
+import * as metrics from "./metrics/seller_metrics";
 
 type Product = {
     sku: string;
@@ -29,10 +30,11 @@ type Order = {
 };
 
 const withError = process.argv.includes("--with-error");
-// Human service port is determined by the environment variable (default to 5002)
-const HUMAN_SERVICE_PORT = process.env.HUMAN_PORT
-    ? process.env.HUMAN_PORT
-    : "5002";
+// Human service port and URL are determined by environment variables
+const HUMAN_SERVICE_PORT = process.env.HUMAN_PORT || "5002";
+const HUMAN_SERVICE_URL = process.env.HUMAN_URL || `http://human:${HUMAN_SERVICE_PORT}`;
+
+console.log(`Human service URL set to: ${HUMAN_SERVICE_URL}`);
 
 const products: Product[] = [
     { sku: "SKU001", description: "Widget A", price: 50 },
@@ -55,6 +57,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Expose metrics endpoint
+app.get("/metrics", async (req, res) => {
+    res.set("Content-Type", metrics.register.contentType);
+    res.end(await metrics.register.metrics());
+});
+
 // --- Public Endpoints ---
 
 // List available products.
@@ -72,6 +80,8 @@ app.get("/pending", (req, res) => {
     const pendingOrders = orders.filter(
         (o) => o.status === "pending_confirmation",
     );
+    // Update pending orders metric
+    metrics.pendingOrdersGauge.set(pendingOrders.length);
     res.json(pendingOrders);
 });
 
@@ -99,12 +109,17 @@ app.post("/approve", (req, res) => {
             .json({ error: "Only orders pending approval can be approved" });
     }
     order.status = "delivered";
+    // Update metrics: decrement pending, increment delivered
+    metrics.orderCounter.inc({ status: "delivered" });
+    metrics.pendingOrdersGauge.dec();
+    
     auditLog(`Order approved and delivered: ${JSON.stringify(order)}`);
     res.status(200).json({ message: "Order approved", order });
 });
 
 // --- Order Endpoint ---
 app.post("/order", async (req, res) => {
+    const startTime = process.hrtime();
     const { accountId, sku, quantity, agent } = req.body;
     if (!accountId || !sku || typeof quantity !== "number" || quantity <= 0) {
         return res.status(400).json({ error: "Invalid payload" });
@@ -124,14 +139,22 @@ app.post("/order", async (req, res) => {
         status: "received",
     };
 
+    // Record order value
+    metrics.orderValueSummary.observe(totalPrice);
+
     // Simulate error ~10% of the time if withError is active.
     if (withError && Math.random() < 0.1) {
         order.error = "Simulated error in order processing";
         order.status = "error";
         orders.push(order);
+        
+        // Update error orders metric
+        metrics.orderCounter.inc({ status: "error" });
+        metrics.errorOrdersGauge.inc();
+        
         auditLog(`Order error: ${JSON.stringify(order)}`);
         try {
-            await fetch(`http://localhost:${HUMAN_SERVICE_PORT}/flag`, {
+            await fetch(`${HUMAN_SERVICE_URL}/flag`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(order),
@@ -142,6 +165,11 @@ app.post("/order", async (req, res) => {
                 `Failed to notify human service for order ${order.id}: ${err}`,
             );
         }
+        
+        // Record processing duration
+        const duration = process.hrtime(startTime);
+        metrics.orderDurationHistogram.observe(duration[0] + duration[1] / 1e9);
+        
         return res.status(201).json(order);
     }
 
@@ -151,9 +179,14 @@ app.post("/order", async (req, res) => {
         if (config.progressiveConfirmation || Math.random() < 0.1) {
             order.status = "pending_confirmation";
             orders.push(order);
+            
+            // Update pending metric
+            metrics.orderCounter.inc({ status: "pending_confirmation" });
+            metrics.pendingOrdersGauge.inc();
+            
             auditLog(`Agent order pending approval: ${JSON.stringify(order)}`);
             try {
-                await fetch(`http://localhost:${HUMAN_SERVICE_PORT}/flag`, {
+                await fetch(`${HUMAN_SERVICE_URL}/flag`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(order),
@@ -169,6 +202,10 @@ app.post("/order", async (req, res) => {
         } else {
             order.status = "delivered";
             orders.push(order);
+            
+            // Update delivered metric
+            metrics.orderCounter.inc({ status: "delivered" });
+            
             auditLog(`Agent order delivered: ${JSON.stringify(order)}`);
         }
     } else {
@@ -176,9 +213,14 @@ app.post("/order", async (req, res) => {
         if (config.progressiveConfirmation) {
             order.status = "pending_confirmation";
             orders.push(order);
+            
+            // Update pending metric
+            metrics.orderCounter.inc({ status: "pending_confirmation" });
+            metrics.pendingOrdersGauge.inc();
+            
             auditLog(`Order pending approval: ${JSON.stringify(order)}`);
             try {
-                await fetch(`http://localhost:${HUMAN_SERVICE_PORT}/flag`, {
+                await fetch(`${HUMAN_SERVICE_URL}/flag`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(order),
@@ -192,10 +234,18 @@ app.post("/order", async (req, res) => {
         } else {
             order.status = "delivered";
             orders.push(order);
+            
+            // Update delivered metric
+            metrics.orderCounter.inc({ status: "delivered" });
+            
             auditLog(`Order delivered: ${JSON.stringify(order)}`);
         }
     }
 
+    // Record processing duration
+    const duration = process.hrtime(startTime);
+    metrics.orderDurationHistogram.observe(duration[0] + duration[1] / 1e9);
+    
     return res.status(201).json(order);
 });
 
@@ -212,6 +262,11 @@ app.post("/revert", (req, res) => {
             .status(400)
             .json({ error: "Only orders with error status can be reverted" });
     }
+    
+    // Update metrics
+    metrics.orderCounter.inc({ status: "reverted" });
+    metrics.errorOrdersGauge.dec();
+    
     order.status = "reverted";
     auditLog(`Order reverted by human intervention: ${JSON.stringify(order)}`);
     return res.status(200).json({ message: "Order reverted", order });
@@ -219,6 +274,7 @@ app.post("/revert", (req, res) => {
 
 app.listen(4000, () => {
     console.log("Business API listening on port 4000");
+    console.log("Metrics available at http://localhost:4000/metrics");
     if (withError) {
         console.log("Running in error simulation mode (--with-error).");
     }
@@ -226,4 +282,8 @@ app.listen(4000, () => {
         `Human service notifications will be sent to port ${HUMAN_SERVICE_PORT}`,
     );
     console.log(`Configuration: ${JSON.stringify(config)}`);
+
+    // Initialize metrics with starting values
+    metrics.pendingOrdersGauge.set(0);
+    metrics.errorOrdersGauge.set(0);
 });

@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  seller:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.seller
+    ports:
+      - "4000:4000"
+    environment:
+      - HUMAN_PORT=5002
+      - SELLER_URL=http://seller:4000
+      - HUMAN_URL=http://human:5002
+    networks:
+      - ueta-network
+    volumes:
+      - ./audit.log:/app/audit.log
+    command: ["pnpm", "run", "start:seller", "--", "--with-error"]
+
+  human:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.human
+    ports:
+      - "5002:5002"
+    environment:
+      - HUMAN_PORT=5002
+    networks:
+      - ueta-network
+    volumes:
+      - ./human_audit.log:/app/human_audit.log
+    command: ["pnpm", "run", "start:human"]
+    depends_on:
+      - seller
+
+  agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.agent
+    ports:
+      - "7001:7001"
+    networks:
+      - ueta-network
+    volumes:
+      - ./agent_audit.log:/app/agent_audit.log
+      - ./account.json:/app/account.json
+    environment:
+      - SELLER_URL=http://seller:4000
+      - HUMAN_URL=http://human:5002
+    command: ["pnpm", "run", "start:agent", "agent"]
+    depends_on:
+      - seller
+      - human
+
+  agent-dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.agent
+    ports:
+      - "6001:6001"
+    networks:
+      - ueta-network
+    volumes:
+      - ./account.json:/app/account.json
+    environment:
+      - SELLER_URL=http://seller:4000
+      - HUMAN_URL=http://human:5002
+    command: ["pnpm", "run", "start:agent", "dashboard"]
+    depends_on:
+      - seller
+      - human
+      - agent
+
+  prometheus:
+    image: prom/prometheus:v2.37.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - ueta-network
+    environment:
+      - SELLER_URL=http://seller:4000
+      - HUMAN_URL=http://human:5002
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - seller
+      - human
+      - agent
+      - agent-dashboard
+
+  grafana:
+    image: grafana/grafana:9.0.3
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    networks:
+      - ueta-network
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - SELLER_URL=http://seller:4000
+      - HUMAN_URL=http://human:5002
+
+networks:
+  ueta-network:
+
+volumes:
+  prometheus-data:
+  grafana-data:

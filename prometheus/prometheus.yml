@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'seller'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['seller:4000']
+        labels:
+          service: 'seller'
+
+  - job_name: 'human'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['human:5002']
+        labels:
+          service: 'human'
+
+  - job_name: 'agent'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['agent:7001']
+        labels:
+          service: 'agent'
+
+  - job_name: 'agent-dashboard'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['agent-dashboard:6001']
+        labels:
+          service: 'agent-dashboard'
