@@ -3,9 +3,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "ueta-liability-calculator/**"
-      - ".github/workflows/deploy-calculator.yml"
   workflow_dispatch:
 
 jobs:
