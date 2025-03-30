@@ -1,7 +1,7 @@
 # UETA Agent -- Goods Producer Demo
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/agentoverlay/ueta-agent-demos/actions/workflows/deploy-calculator.yml/badge.svg)](https://github.com/agentoverlay/ueta-agent-demos/actions)
+[![Deploy UETA Liability Calculator to GitHub Pages](https://github.com/agentoverlay/ueta-agent-error-handling-demos/actions/workflows/deploy-calculator.yml/badge.svg)](https://github.com/agentoverlay/ueta-agent-error-handling-demos/actions/workflows/deploy-calculator.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/agentoverlay/ueta-agent-demos/)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fagentoverlay.github.io%2Fueta-agent-demos%2Fueta-liability-calculator%2F&label=Demo)](https://agentoverlay.github.io/ueta-agent-demos/ueta-liability-calculator/)
 
