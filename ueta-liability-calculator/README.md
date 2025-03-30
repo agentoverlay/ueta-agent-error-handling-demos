@@ -1,54 +1,68 @@
-# React + TypeScript + Vite
+# UETA Liability Calculator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A financial calculator for estimating potential liability, revenue, and profit under the Uniform Electronic Transactions Act (UETA).
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Calculate potential liability based on transaction volume and agent-handled percentage
+- Visualize the relationship between transactions, revenue, and liability
+- Apply various mitigation strategies to reduce liability
+- Export results to CSV or PDF format
 
-## Expanding the ESLint configuration
+## Live Demo
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The calculator is available online at: https://madeco.github.io/ueta-agent-demos/ueta-liability-calculator/
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Local Development
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or pnpm
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+# or
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development Server
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run dev
+# or
+pnpm dev
 ```
+
+### Build for Production
+
+```bash
+npm run build
+# or
+pnpm build
+```
+
+## Deployment
+
+This project is configured to automatically deploy to GitHub Pages when changes are pushed to the main branch using GitHub Actions.
+
+### Manual Deployment
+
+If you need to manually deploy:
+
+1. Build the project:
+   ```bash
+   npm run build
+   ```
+
+2. Deploy using GitHub Pages:
+   - Go to your repository on GitHub
+   - Navigate to Settings > Pages
+   - Set the source to GitHub Actions
+
+## License
+
+[MIT](LICENSE)

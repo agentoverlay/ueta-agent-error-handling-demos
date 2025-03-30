@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.0.17",
+    "@tailwindcss/vite": "^4.0.17",
     "chart.js": "^4.4.8",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
