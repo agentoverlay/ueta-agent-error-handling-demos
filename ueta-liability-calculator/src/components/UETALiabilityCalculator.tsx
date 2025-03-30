@@ -780,6 +780,8 @@ export const UetaLiabilityCalculator = () => {
           <div style={{ height: "500px" }}>
             <Line data={chartData} options={chartOptions} />
           </div>
+          This is for demonstration purposes. Do not make any financial
+          decisions on this.
         </div>
       </div>
     </div>
