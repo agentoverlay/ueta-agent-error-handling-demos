@@ -307,7 +307,8 @@ export const UetaLiabilityCalculator = () => {
       >
         UETA Liability Calculator
       </h1>
-
+      This is for demonstration purposes only. Do not make any financial
+      decisions based on this calculator.
       {/* Two-column layout with direct styles */}
       <div
         style={{
