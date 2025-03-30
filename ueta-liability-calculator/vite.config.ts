@@ -3,9 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // Get the repository name from package.json or environment variables
 const getRepositoryName = () => {
-  // GitHub Pages deployment is usually in the format: https://username.github.io/repository/
-  // So we need to set the base path as /repository/
-  return '/ueta-agent-demos/ueta-liability-calculator/'
+  return '/ueta-agent-demos'
 }
 
 // https://vite.dev/config/
