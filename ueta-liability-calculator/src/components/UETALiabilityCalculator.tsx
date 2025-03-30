@@ -305,7 +305,7 @@ export const UetaLiabilityCalculator = () => {
           marginBottom: "24px",
         }}
       >
-        UETA Liability Calculator
+        UETA Agent Liability Calculator
       </h1>
       This is for demonstration purposes only. Do not make any financial
       decisions based on this calculator.
