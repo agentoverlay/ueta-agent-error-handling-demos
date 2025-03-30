@@ -1,9 +1,9 @@
 # UETA Agent -- Goods Producer Demo
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/madeco/ueta-agent-demos/actions/workflows/deploy-calculator.yml/badge.svg)](https://github.com/madeco/ueta-agent-demos/actions)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/madeco/ueta-agent-demos/)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fmadeco.github.io%2Fueta-agent-demos%2Fueta-liability-calculator%2F&label=Demo)](https://madeco.github.io/ueta-agent-demos/ueta-liability-calculator/)
+[![Build Status](https://github.com/agentoverlay/ueta-agent-demos/actions/workflows/deploy-calculator.yml/badge.svg)](https://github.com/agentoverlay/ueta-agent-demos/actions)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/agentoverlay/ueta-agent-demos/)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fagentoverlay.github.io%2Fueta-agent-demos%2Fueta-liability-calculator%2F&label=Demo)](https://agentoverlay.github.io/ueta-agent-demos/ueta-liability-calculator/)
 
 This repository showcases how AI-driven agents can integrate with legal frameworks and electronic transactions in the context of a modern goods producer. Inspired by Section 10 of the UETA (Uniform Electronic Transactions Act), the demo features a business API that offers a product catalog and processes orders, while both an autonomous agent (with a dashboard) and a human operator (with a separate dashboard) can interact with transactions. The system emphasizes robust error handling, auditability, and progressive confirmation of transactions—occasionally requiring manual approval (with a 1/10 probability for agent orders) before orders are finalized.
 
@@ -28,7 +28,7 @@ This repository contains demos that illustrate several aspects of AI-assisted le
 
 | Demo | Description | Link |
 |------|-------------|------|
-| **UETA Liability Calculator** | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/madeco/ueta-agent-demos/deploy-calculator.yml?label=build)](https://github.com/madeco/ueta-agent-demos/actions/workflows/deploy-calculator.yml) | [Live Demo](https://madeco.github.io/ueta-agent-demos/ueta-liability-calculator/) |
+| **UETA Liability Calculator** | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/agentoverlay/ueta-agent-demos/deploy-calculator.yml?label=build)](https://github.com/agentoverlay/ueta-agent-demos/actions/workflows/deploy-calculator.yml) | [Live Demo](https://agentoverlay.github.io/ueta-agent-demos/ueta-liability-calculator/) |
 | **Agent Dashboard** | Coming Soon | - |
 | **Human Intervention Dashboard** | Coming Soon | - |
 

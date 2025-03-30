@@ -1,9 +1,9 @@
 # UETA Liability Calculator
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/madeco/ueta-agent-demos/actions/workflows/deploy-calculator.yml/badge.svg)](https://github.com/madeco/ueta-agent-demos/actions/workflows/deploy-calculator.yml)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/madeco/ueta-agent-demos/tree/main/ueta-liability-calculator)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fmadeco.github.io%2Fueta-agent-demos%2Fueta-liability-calculator%2F&label=Website)](https://madeco.github.io/ueta-agent-demos/ueta-liability-calculator/)
+[![Build Status](https://github.com/agentoverlay/ueta-agent-demos/actions/workflows/deploy-calculator.yml/badge.svg)](https://github.com/agentoverlay/ueta-agent-demos/actions/workflows/deploy-calculator.yml)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/agentoverlay/ueta-agent-demos/tree/main/ueta-liability-calculator)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fagentoverlay.github.io%2Fueta-agent-demos%2Fueta-liability-calculator%2F&label=Website)](https://agentoverlay.github.io/ueta-agent-demos/ueta-liability-calculator/)
 
 A financial calculator for estimating potential liability, revenue, and risk metrics under the Uniform Electronic Transactions Act (UETA).
 
@@ -16,7 +16,7 @@ A financial calculator for estimating potential liability, revenue, and risk met
 
 ## Live Demo
 
-The calculator is available online at: https://madeco.github.io/ueta-agent-demos/ueta-liability-calculator/
+The calculator is available online at: https://agentoverlay.github.io/ueta-agent-demos/ueta-liability-calculator/
 
 ## Screenshots
 
