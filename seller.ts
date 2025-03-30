@@ -30,16 +30,19 @@ type Order = {
 };
 
 const withError = process.argv.includes("--with-error");
-// Human service port and URL are determined by environment variables
-const HUMAN_SERVICE_PORT = process.env.HUMAN_PORT || "5002";
-const HUMAN_SERVICE_URL = process.env.HUMAN_URL || `http://human:${HUMAN_SERVICE_PORT}`;
+// Consumer service port and URL are determined by environment variables
+const CONSUMER_SERVICE_PORT = process.env.CONSUMER_PORT || "5002";
+const CONSUMER_SERVICE_URL = process.env.CONSUMER_URL || `http://consumer:${CONSUMER_SERVICE_PORT}`;
 
-console.log(`Human service URL set to: ${HUMAN_SERVICE_URL}`);
+console.log(`Consumer service URL set to: ${CONSUMER_SERVICE_URL}`);
 
 const products: Product[] = [
-    { sku: "SKU001", description: "Widget A", price: 50 },
-    { sku: "SKU002", description: "Widget B", price: 30 },
-    { sku: "SKU003", description: "Gadget C", price: 100 },
+    { sku: "APPLES", description: "Fresh Red Apples (1 lb)", price: 2.99 },
+    { sku: "BANANAS", description: "Organic Bananas (bunch)", price: 1.49 },
+    { sku: "MILK", description: "Whole Milk (1 gallon)", price: 3.75 },
+    { sku: "BREAD", description: "Whole Wheat Bread", price: 2.25 },
+    { sku: "EGGS", description: "Large Eggs (dozen)", price: 3.99 },
+    { sku: "CHEESE", description: "Cheddar Cheese Block (8 oz)", price: 4.50 }
 ];
 
 const orders: Order[] = [];
@@ -97,7 +100,7 @@ app.get("/stats", (req, res) => {
 });
 
 // --- Approval Endpoint ---
-// When a human approves an order via the human dashboard, this endpoint updates the order status.
+// When a consumer approves an order via the consumer dashboard, this endpoint updates the order status.
 app.post("/approve", (req, res) => {
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ error: "orderId is required" });
@@ -154,15 +157,15 @@ app.post("/order", async (req, res) => {
         
         auditLog(`Order error: ${JSON.stringify(order)}`);
         try {
-            await fetch(`${HUMAN_SERVICE_URL}/flag`, {
+            await fetch(`${CONSUMER_SERVICE_URL}/flag`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(order),
             });
-            auditLog(`Notified human service of error for order ${order.id}`);
+            auditLog(`Notified consumer service of error for order ${order.id}`);
         } catch (err) {
             auditLog(
-                `Failed to notify human service for order ${order.id}: ${err}`,
+                `Failed to notify consumer service for order ${order.id}: ${err}`,
             );
         }
         
@@ -186,17 +189,17 @@ app.post("/order", async (req, res) => {
             
             auditLog(`Agent order pending approval: ${JSON.stringify(order)}`);
             try {
-                await fetch(`${HUMAN_SERVICE_URL}/flag`, {
+                await fetch(`${CONSUMER_SERVICE_URL}/flag`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(order),
                 });
                 auditLog(
-                    `Notified human service of pending agent order ${order.id}`,
+                    `Notified consumer service of pending agent order ${order.id}`,
                 );
             } catch (err) {
                 auditLog(
-                    `Failed to notify human service for agent order ${order.id}: ${err}`,
+                    `Failed to notify consumer service for agent order ${order.id}: ${err}`,
                 );
             }
         } else {
@@ -220,15 +223,15 @@ app.post("/order", async (req, res) => {
             
             auditLog(`Order pending approval: ${JSON.stringify(order)}`);
             try {
-                await fetch(`${HUMAN_SERVICE_URL}/flag`, {
+                await fetch(`${CONSUMER_SERVICE_URL}/flag`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(order),
                 });
-                auditLog(`Notified human service of pending order ${order.id}`);
+                auditLog(`Notified consumer service of pending order ${order.id}`);
             } catch (err) {
                 auditLog(
-                    `Failed to notify human service for order ${order.id}: ${err}`,
+                    `Failed to notify consumer service for order ${order.id}: ${err}`,
                 );
             }
         } else {
@@ -249,7 +252,7 @@ app.post("/order", async (req, res) => {
     return res.status(201).json(order);
 });
 
-// Endpoint for human intervention to revert an order.
+// Endpoint for consumer intervention to revert an order.
 app.post("/revert", (req, res) => {
     const { orderId } = req.body;
     if (!orderId) {
@@ -268,7 +271,7 @@ app.post("/revert", (req, res) => {
     metrics.errorOrdersGauge.dec();
     
     order.status = "reverted";
-    auditLog(`Order reverted by human intervention: ${JSON.stringify(order)}`);
+    auditLog(`Order reverted by consumer intervention: ${JSON.stringify(order)}`);
     return res.status(200).json({ message: "Order reverted", order });
 });
 
@@ -279,7 +282,7 @@ app.listen(4000, () => {
         console.log("Running in error simulation mode (--with-error).");
     }
     console.log(
-        `Human service notifications will be sent to port ${HUMAN_SERVICE_PORT}`,
+        `Consumer service notifications will be sent to port ${CONSUMER_SERVICE_PORT}`,
     );
     console.log(`Configuration: ${JSON.stringify(config)}`);
 

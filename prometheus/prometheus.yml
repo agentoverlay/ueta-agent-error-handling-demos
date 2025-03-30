@@ -10,12 +10,12 @@ scrape_configs:
         labels:
           service: 'seller'
 
-  - job_name: 'human'
+  - job_name: 'consumer'
     scrape_interval: 5s
     static_configs:
-      - targets: ['human:5002']
+      - targets: ['consumer:5002']
         labels:
-          service: 'human'
+          service: 'consumer'
 
   - job_name: 'agent'
     scrape_interval: 5s

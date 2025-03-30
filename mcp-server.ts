@@ -8,19 +8,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import { Request, Response } from "express";
-
-// Configuration
-interface Config {
-    auditableLog: boolean;
-    monitoringEnabled: boolean;
-    progressiveConfirmation: boolean;
-}
-
-const config: Config = {
-    auditableLog: true,
-    monitoringEnabled: true,
-    progressiveConfirmation: true,
-};
+import { mcpServerConfig } from "./mcp-server-config";
 
 // Constants
 const ACCOUNT_FILE = path.join(__dirname, "account.json");
@@ -30,10 +18,10 @@ const AGENT_AUDIT_FILE = path.join(__dirname, "agent_audit.log");
 // Helper for agent audit logging.
 function agentAuditLog(message: string) {
     const logLine = `${new Date().toISOString()} - ${message}`;
-    if (config.auditableLog) {
+    if (mcpServerConfig.auditableLog) {
         fs.appendFileSync(AGENT_AUDIT_FILE, logLine + "\n");
     }
-    if (config.monitoringEnabled) {
+    if (mcpServerConfig.monitoringEnabled) {
         console.log(`[AGENT MONITOR] ${logLine}`);
     }
 }
@@ -108,7 +96,7 @@ server.resource(
     "products://list",
     async (uri) => {
         try {
-            const response = await fetch("http://localhost:4000/products");
+            const response = await fetch(`${mcpServerConfig.sellerUrl}/products`);
             if (!response.ok) {
                 agentAuditLog("Error fetching products from business API.");
                 return {
@@ -153,7 +141,7 @@ server.resource(
                 };
             }
             
-            const response = await fetch("http://localhost:4000/pending");
+            const response = await fetch(`${mcpServerConfig.sellerUrl}/pending`);
             if (!response.ok) {
                 return {
                     contents: [{
@@ -191,7 +179,7 @@ server.resource(
     "stats://overall",
     async (uri) => {
         try {
-            const statsResponse = await fetch("http://localhost:4000/stats");
+            const statsResponse = await fetch(`${mcpServerConfig.sellerUrl}/stats`);
             const stats = statsResponse.ok
                 ? await statsResponse.json()
                 : { totalOrders: 0, totalAmountPaid: 0 };
@@ -234,8 +222,8 @@ server.resource(
                 text: JSON.stringify({
                     accountId: account.id,
                     walletBalance: account.wallet,
-                    auditLogEnabled: config.auditableLog,
-                    monitoringEnabled: config.monitoringEnabled
+                    auditLogEnabled: mcpServerConfig.auditableLog,
+                    monitoringEnabled: mcpServerConfig.monitoringEnabled
                 }, null, 2)
             }]
         };
@@ -298,7 +286,7 @@ server.tool(
         
         try {
             // Fetch product details
-            const res = await fetch("http://localhost:4000/products");
+            const res = await fetch(`${mcpServerConfig.sellerUrl}/products`);
             if (!res.ok) {
                 agentAuditLog("Error fetching products for order.");
                 return {
@@ -343,7 +331,7 @@ server.tool(
                 agent: agentMode,
             };
             
-            const response = await fetch("http://localhost:4000/order", {
+            const response = await fetch(`${mcpServerConfig.sellerUrl}/order`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -394,7 +382,7 @@ server.tool(
     { orderId: z.string() },
     async ({ orderId }) => {
         try {
-            const response = await fetch("http://localhost:4000/approve", {
+            const response = await fetch(`${mcpServerConfig.sellerUrl}/approve`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ orderId }),
@@ -459,7 +447,7 @@ server.tool(
                     
                     try {
                         // Fetch products
-                        const res = await fetch("http://localhost:4000/products");
+                        const res = await fetch(`${mcpServerConfig.sellerUrl}/products`);
                         if (!res.ok) {
                             agentAuditLog("Agent error: Failed to fetch products.");
                             continue;
@@ -493,7 +481,7 @@ server.tool(
                             agent: true,
                         };
                         
-                        const response = await fetch("http://localhost:4000/order", {
+                        const response = await fetch(`${mcpServerConfig.sellerUrl}/order`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify(payload),
@@ -569,7 +557,7 @@ export function startDashboard(port = 6001) {
     appDashboard.get("/dashboard", async (req: Request, res: Response) => {
         try {
             // Fetch pending orders.
-            const pendingResponse = await fetch("http://localhost:4000/pending");
+            const pendingResponse = await fetch(`${mcpServerConfig.sellerUrl}/pending`);
             if (!pendingResponse.ok) {
                 res.send("Error fetching pending orders from business API.");
                 return;
@@ -589,7 +577,7 @@ export function startDashboard(port = 6001) {
             );
 
             // Fetch overall stats.
-            const statsResponse = await fetch("http://localhost:4000/stats");
+            const statsResponse = await fetch(`${mcpServerConfig.sellerUrl}/stats`);
             const stats = statsResponse.ok
                 ? await statsResponse.json()
                 : { totalOrders: 0, totalAmountPaid: 0 };
@@ -650,7 +638,7 @@ export function startDashboard(port = 6001) {
                   async function approveOrder(orderId) {
                     if (!confirm('Approve order ' + orderId + '?')) return;
                     try {
-                      const response = await fetch('http://localhost:4000/approve', {
+                      const response = await fetch('${mcpServerConfig.sellerUrl}/approve', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orderId })
@@ -681,6 +669,7 @@ export function startDashboard(port = 6001) {
 
     appDashboard.listen(port, () => {
         console.log(`Agent dashboard listening on port ${port}`);
+        console.log(`Using seller service at: ${mcpServerConfig.sellerUrl}`);
     });
 }
 
@@ -704,6 +693,7 @@ export { server };
 
 // Main function to start the server if run directly
 async function main() {
+    console.log(`Starting MCP server with seller URL: ${mcpServerConfig.sellerUrl}`);
     const transport = new StdioServerTransport();
     await server.connect(transport);
 }

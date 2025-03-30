@@ -8,28 +8,28 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - HUMAN_PORT=5002
+      - CONSUMER_PORT=5002
       - SELLER_URL=http://seller:4000
-      - HUMAN_URL=http://human:5002
+      - CONSUMER_URL=http://consumer:5002
     networks:
       - ueta-network
     volumes:
       - ./audit.log:/app/audit.log
     command: ["pnpm", "run", "start:seller", "--", "--with-error"]
 
-  human:
+  consumer:
     build:
       context: .
-      dockerfile: docker/Dockerfile.human
+      dockerfile: docker/Dockerfile.consumer
     ports:
       - "5002:5002"
     environment:
-      - HUMAN_PORT=5002
+      - CONSUMER_PORT=5002
     networks:
       - ueta-network
     volumes:
-      - ./human_audit.log:/app/human_audit.log
-    command: ["pnpm", "run", "start:human"]
+      - ./consumer_audit.log:/app/consumer_audit.log
+    command: ["pnpm", "run", "start:consumer"]
     depends_on:
       - seller
 
@@ -46,11 +46,11 @@ services:
       - ./account.json:/app/account.json
     environment:
       - SELLER_URL=http://seller:4000
-      - HUMAN_URL=http://human:5002
+      - CONSUMER_URL=http://consumer:5002
     command: ["pnpm", "run", "start:agent", "agent"]
     depends_on:
       - seller
-      - human
+      - consumer
 
   agent-dashboard:
     build:
@@ -64,11 +64,11 @@ services:
       - ./account.json:/app/account.json
     environment:
       - SELLER_URL=http://seller:4000
-      - HUMAN_URL=http://human:5002
+      - CONSUMER_URL=http://consumer:5002
     command: ["pnpm", "run", "start:agent", "dashboard"]
     depends_on:
       - seller
-      - human
+      - consumer
       - agent
 
   prometheus:
@@ -82,7 +82,7 @@ services:
       - ueta-network
     environment:
       - SELLER_URL=http://seller:4000
-      - HUMAN_URL=http://human:5002
+      - CONSUMER_URL=http://consumer:5002
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -91,7 +91,7 @@ services:
       - '--web.enable-lifecycle'
     depends_on:
       - seller
-      - human
+      - consumer
       - agent
       - agent-dashboard
 
@@ -112,7 +112,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
       - SELLER_URL=http://seller:4000
-      - HUMAN_URL=http://human:5002
+      - CONSUMER_URL=http://consumer:5002
 
 networks:
   ueta-network:

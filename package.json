@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start:seller": "ts-node seller.ts",
-    "start:human": "ts-node human.ts",
+    "start:consumer": "ts-node consumer.ts",
     "start:agent": "ts-node agent.ts",
     "start:server": "ts-node mcp-server.ts"
   },
