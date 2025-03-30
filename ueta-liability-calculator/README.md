@@ -1,17 +1,26 @@
 # UETA Liability Calculator
 
-A financial calculator for estimating potential liability, revenue, and profit under the Uniform Electronic Transactions Act (UETA).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/madeco/ueta-agent-demos/actions/workflows/deploy-calculator.yml/badge.svg)](https://github.com/madeco/ueta-agent-demos/actions/workflows/deploy-calculator.yml)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/madeco/ueta-agent-demos/tree/main/ueta-liability-calculator)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fmadeco.github.io%2Fueta-agent-demos%2Fueta-liability-calculator%2F&label=Website)](https://madeco.github.io/ueta-agent-demos/ueta-liability-calculator/)
+
+A financial calculator for estimating potential liability, revenue, and risk metrics under the Uniform Electronic Transactions Act (UETA).
 
 ## Features
 
 - Calculate potential liability based on transaction volume and agent-handled percentage
-- Visualize the relationship between transactions, revenue, and liability
+- Visualize the relationship between transactions, liability, and liability as a percentage of revenue
 - Apply various mitigation strategies to reduce liability
 - Export results to CSV or PDF format
 
 ## Live Demo
 
 The calculator is available online at: https://madeco.github.io/ueta-agent-demos/ueta-liability-calculator/
+
+## Screenshots
+
+![UETA Liability Calculator](https://i.ibb.co/placeholder-image.png)
 
 ## Local Development
 
@@ -62,6 +71,17 @@ If you need to manually deploy:
    - Go to your repository on GitHub
    - Navigate to Settings > Pages
    - Set the source to GitHub Actions
+
+## Technical Details
+
+- Built with React, TypeScript, and Vite
+- Uses Chart.js for data visualization
+- Responsive design for desktop and mobile use
+- Calculates liability metrics based on industry models
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
