@@ -4,11 +4,11 @@
 import { useState } from "react";
 import { env } from "../lib/env";
 
-interface LoginProps {
+interface WalletProps {
   onAccountCreated: (account: { id: string; wallet: number }) => void;
 }
 
-export default function Login({ onAccountCreated }: LoginProps) {
+export default function Wallet({ onAccountCreated }: WalletProps) {
   const [deposit, setDeposit] = useState<number>(100);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);

@@ -22,6 +22,7 @@ services:
     volumes:
       - ./account.json:/app/src/account.json
       - ./agent_audit.log:/app/src/agent_audit.log
+      - ./src/data/policies.json:/app/src/data/policies.json
     networks:
       - ueta-network
 

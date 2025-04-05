@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { env } from "../lib/env";
+import { PolicyEvaluation } from "../lib/policy-types";
 
 interface Product {
   sku: string;
@@ -33,6 +34,8 @@ export default function CreatePurchaseOrder({
     text: string;
     type: "success" | "error" | "";
   } | null>(null);
+  const [policyEvaluations, setPolicyEvaluations] = useState<PolicyEvaluation[]>([]);
+  const [requiresApproval, setRequiresApproval] = useState(false);
 
   // Fetch products on component mount
   useEffect(() => {
@@ -69,6 +72,41 @@ export default function CreatePurchaseOrder({
   };
 
   const totalCost = calculateTotalCost();
+
+  // Check if the order would trigger any policies
+  const checkPolicies = async () => {
+    if (!currentAccount || !selectedSku || quantity <= 0) return;
+
+    try {
+      const walletAfterOrder = currentAccount.wallet - totalCost;
+      
+      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/policies/check`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sku: selectedSku,
+          quantity,
+          totalPrice: totalCost,
+          walletBalance: walletAfterOrder
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRequiresApproval(data.requiresApproval);
+        setPolicyEvaluations(data.evaluations.filter((e: PolicyEvaluation) => e.triggered));
+      }
+    } catch (error) {
+      console.error("Error checking policies:", error);
+    }
+  };
+
+  // Check policies when relevant inputs change
+  useEffect(() => {
+    checkPolicies();
+  }, [selectedSku, quantity, currentAccount, totalCost]);
 
   // Handle form submission to place an order
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,14 +165,24 @@ export default function CreatePurchaseOrder({
           });
         }
 
+        // Check if order requires approval
+        const orderRequiresApproval = data.requiresApproval || false;
+        
+        let successMessage = "Order placed successfully!";
+        if (orderRequiresApproval) {
+          successMessage += " This order requires human approval before processing.";
+        }
+
         setMessage({
-          text: "Order placed successfully!",
+          text: successMessage,
           type: "success",
         });
 
         // Reset form
         setQuantity(1);
         setIsAgentMode(false);
+        setPolicyEvaluations([]);
+        setRequiresApproval(false);
       } else {
         setMessage({
           text: data.error || "Error placing order",
@@ -227,6 +275,26 @@ export default function CreatePurchaseOrder({
             </span>
           </label>
         </div>
+
+        {/* Policy evaluation warnings */}
+        {requiresApproval && policyEvaluations.length > 0 && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
+            <p className="font-medium text-amber-800 mb-2">
+              ⚠️ This order will require human approval
+            </p>
+            <div className="text-sm text-amber-700">
+              <p>The following policies were triggered:</p>
+              <ul className="list-disc ml-5 mt-1">
+                {policyEvaluations.map((evaluation, idx) => (
+                  <li key={idx}>
+                    <span className="font-medium">{evaluation.policyName}</span>
+                    {evaluation.reason && <span>: {evaluation.reason}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
 
         <div className="mb-4 p-3 bg-gray-50 rounded">
           <p className="font-medium">

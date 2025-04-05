@@ -12,7 +12,9 @@ RUN npm install -g pnpm && pnpm install
 COPY . .
 
 # Create necessary files if they don't exist
-RUN touch account.json agent_audit.log
+RUN touch account.json agent_audit.log \
+    && mkdir -p src/data \
+    && echo '[]' > src/data/policies.json
 
 # Expose the port the app runs on
 EXPOSE 3001

@@ -15,6 +15,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { config } from "../lib/config";
+import { PolicyService } from "../lib/policy-service";
+import { FlagPolicy, PolicyOperator, PolicyTarget } from "../lib/policy-types";
 
 // Constants
 const ACCOUNT_FILE = path.join(__dirname, "../account.json");
@@ -132,6 +134,140 @@ app.get("/api/orders/pending", async (req, res) => {
     }
 });
 
+// Get policies
+app.get("/api/policies", (req, res) => {
+    try {
+        const policies = PolicyService.loadPolicies();
+        return res.json(policies);
+    } catch (error) {
+        return res.status(500).json({ error: `Error getting policies: ${error}` });
+    }
+});
+
+// Get a specific policy
+app.get("/api/policies/:id", (req, res) => {
+    try {
+        const { id } = req.params;
+        const policies = PolicyService.loadPolicies();
+        const policy = policies.find(p => p.id === id);
+        
+        if (!policy) {
+            return res.status(404).json({ error: "Policy not found" });
+        }
+        
+        return res.json(policy);
+    } catch (error) {
+        return res.status(500).json({ error: `Error getting policy: ${error}` });
+    }
+});
+
+// Create a new policy
+app.post("/api/policies", (req, res) => {
+    try {
+        const { name, description, target, operator, value, enabled } = req.body;
+        
+        if (!name || !target || !operator || value === undefined) {
+            return res.status(400).json({ error: "Required fields missing" });
+        }
+        
+        // Validate target
+        if (!Object.values(PolicyTarget).includes(target as PolicyTarget)) {
+            return res.status(400).json({ error: `Invalid target. Must be one of: ${Object.values(PolicyTarget).join(', ')}` });
+        }
+        
+        // Validate operator
+        if (!Object.values(PolicyOperator).includes(operator as PolicyOperator)) {
+            return res.status(400).json({ error: `Invalid operator. Must be one of: ${Object.values(PolicyOperator).join(', ')}` });
+        }
+        
+        const policy = PolicyService.addPolicy({
+            name,
+            description,
+            target: target as PolicyTarget,
+            operator: operator as PolicyOperator,
+            value,
+            enabled: enabled !== undefined ? enabled : true
+        });
+        
+        return res.status(201).json(policy);
+    } catch (error) {
+        return res.status(500).json({ error: `Error creating policy: ${error}` });
+    }
+});
+
+// Update a policy
+app.put("/api/policies/:id", (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, target, operator, value, enabled } = req.body;
+        
+        // Validate target if provided
+        if (target && !Object.values(PolicyTarget).includes(target as PolicyTarget)) {
+            return res.status(400).json({ error: `Invalid target. Must be one of: ${Object.values(PolicyTarget).join(', ')}` });
+        }
+        
+        // Validate operator if provided
+        if (operator && !Object.values(PolicyOperator).includes(operator as PolicyOperator)) {
+            return res.status(400).json({ error: `Invalid operator. Must be one of: ${Object.values(PolicyOperator).join(', ')}` });
+        }
+        
+        const updatedPolicy = PolicyService.updatePolicy(id, {
+            name,
+            description,
+            target: target as PolicyTarget,
+            operator: operator as PolicyOperator,
+            value,
+            enabled
+        });
+        
+        if (!updatedPolicy) {
+            return res.status(404).json({ error: "Policy not found" });
+        }
+        
+        return res.json(updatedPolicy);
+    } catch (error) {
+        return res.status(500).json({ error: `Error updating policy: ${error}` });
+    }
+});
+
+// Delete a policy
+app.delete("/api/policies/:id", (req, res) => {
+    try {
+        const { id } = req.params;
+        const success = PolicyService.deletePolicy(id);
+        
+        if (!success) {
+            return res.status(404).json({ error: "Policy not found" });
+        }
+        
+        return res.json({ message: "Policy deleted successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: `Error deleting policy: ${error}` });
+    }
+});
+
+// Check if an order would require approval
+app.post("/api/policies/check", (req, res) => {
+    try {
+        const { sku, quantity, totalPrice, walletBalance } = req.body;
+        
+        if (!sku || !quantity || totalPrice === undefined || walletBalance === undefined) {
+            return res.status(400).json({ error: "Required fields missing" });
+        }
+        
+        const result = PolicyService.checkPolicies({
+            sku,
+            quantity,
+            totalPrice,
+            walletBalance
+        });
+        
+        return res.json(result);
+    } catch (error) {
+        return res.status(500).json({ error: `Error checking policies: ${error}` });
+    }
+});
+
 // Get transaction logs
 app.get("/api/logs", (req, res) => {
     try {
@@ -188,6 +324,12 @@ app.post("/api/order", async (req, res) => {
         }
         
         const products = await productRes.json();
+        console.log('[API] Available products:', products);
+        
+        // Print enabled policies for debugging
+        const enabledPolicies = PolicyService.loadPolicies().filter(p => p.enabled);
+        console.log('[API] Enabled policies:', enabledPolicies);
+        
         const product = products.find((p: any) => p.sku === sku);
         
         if (!product) {
@@ -204,13 +346,35 @@ app.post("/api/order", async (req, res) => {
                 error: `Insufficient funds in wallet. Wallet: ${account.wallet}, Order cost: ${totalCost}`
             });
         }
-        
+
+        // Check if order requires approval based on policies
+        const policyResult = PolicyService.checkPolicies({
+            sku,
+            quantity,
+            totalPrice: totalCost,
+            walletBalance: account.wallet - totalCost // Balance after order
+        });
+
+        // Create payload for the order
         const payload = {
             accountId: account.id,
             sku,
             quantity,
-            agent: agentMode,
+            agent: agentMode || policyResult.requiresApproval, // Force agent flag if policies triggered
         };
+
+        // Log policy evaluation
+        console.log(`[API] Policy check result: requires approval = ${policyResult.requiresApproval}`);
+        console.log(`[API] Order payload to seller:`, payload);
+        
+        if (policyResult.requiresApproval) {
+            const triggerReasons = policyResult.evaluations
+                .filter(e => e.triggered)
+                .map(e => e.reason)
+                .join('; ');
+            agentAuditLog(`Order requires approval due to policies: ${triggerReasons}`);
+        }
+        
         
         const orderResponse = await fetch(`${config.sellerUrl}/order`, {
             method: "POST",
@@ -235,7 +399,9 @@ app.post("/api/order", async (req, res) => {
         return res.json({
             message: "Order placed successfully",
             order,
-            walletBalance: account.wallet
+            walletBalance: account.wallet,
+            requiresApproval: policyResult.requiresApproval,
+            policyEvaluations: policyResult.requiresApproval ? policyResult.evaluations : undefined
         });
     } catch (error) {
         agentAuditLog(`Error connecting to business API while placing order: ${error}`);

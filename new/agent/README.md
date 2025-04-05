@@ -8,6 +8,7 @@ This is a modern web dashboard for the UETA Agent system, built with NextJS. It 
 - **Create Purchase Order**: Create new purchase orders and manage your account
 - **Review Dashboard**: Monitor pending orders, approve transactions, and start/stop the autonomous agent
 - **Transaction Logs**: View detailed audit logs of all agent activities
+- **Approval Policies**: Create and manage approval policies for orders
 
 ## Architecture
 
@@ -120,7 +121,19 @@ To add new features to the dashboard:
 2. Import and integrate the component in the main page (`src/app/page.tsx`)
 3. Add any necessary API endpoints to the API server (`api/server.ts`)
 
-### Building for Production
+### Approval Policies
+
+The application includes a flag policy system that allows you to define rules for when orders require human approval. These policies can be based on various conditions:
+
+- **Order Total**: Require approval for orders over a certain amount
+- **Order Quantity**: Require approval for bulk orders
+- **Product SKU**: Require approval for specific products
+- **Wallet Balance**: Require approval when balance would fall below a threshold
+- **Time of Day**: Require approval for orders placed during certain hours
+
+Each policy can be enabled or disabled individually. When an order matches any enabled policy, it will be flagged for human approval in the dashboard.
+
+## Building for Production
 
 ```bash
 pnpm run build
