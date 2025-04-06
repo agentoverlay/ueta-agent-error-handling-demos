@@ -271,7 +271,7 @@ export default function CreatePurchaseOrder({
               disabled={loading}
             />
             <span className="ml-2 text-sm text-gray-700">
-              Place order as agent (may require approval)
+              Place order as agent (will require approval in 1/10 cases, regardless of policies)
             </span>
           </label>
         </div>

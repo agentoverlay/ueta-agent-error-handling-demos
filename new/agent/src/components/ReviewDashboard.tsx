@@ -12,6 +12,7 @@ interface Order {
   totalPrice: number;
   orderDate: string;
   status: string;
+  policyTriggered?: boolean; // Flag to indicate if this order was flagged by our policies
   error?: string;
 }
 

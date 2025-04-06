@@ -21,13 +21,8 @@
   },
   {
     "id": "policy-3",
-    "enabled": true,
-    "createdAt": "2025-04-05T00:00:00.000Z",
-    "name": "Order SKU 003 ",
-    "description": "Ask about bananas",
-    "target": "productSku",
-    "operator": "=",
-    "value": "BANANAS"
+    "enabled": false,
+    "createdAt": "2025-04-05T00:00:00.000Z"
   },
   {
     "id": "policy-4",

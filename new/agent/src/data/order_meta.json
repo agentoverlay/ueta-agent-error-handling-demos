@@ -1,0 +1,48 @@
+{
+  "acdf9912-7d82-4375-a048-8b6307f7acdb": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "197f6592-5236-4491-a834-d32c5f8233de": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "5a48e1b2-acb8-482e-98f2-7adbe9266658": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "98264fa3-e0c2-4606-8e6b-0abd48fb0025": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "5b88a3c2-8ac6-4c18-a71d-7db5fe7e846b": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "32bf5fc3-0e65-4eef-94e1-6d76f416b5ee": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "5506a16e-4c98-4bdf-b5bb-8933123cb0a9": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "d934c535-504a-464b-ab6b-20c8e8452074": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "ee887e8c-2ba4-4cb2-98ac-5f9d0769fafe": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "bc25b364-4ad6-4808-b738-9ef1119a6c13": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "4143fc39-e258-4964-a28f-cd56d7c0aa0e": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  }
+}

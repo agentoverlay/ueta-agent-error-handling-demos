@@ -128,7 +128,29 @@ app.get("/api/orders/pending", async (req, res) => {
             (order: any) => order.accountId === account.id
         );
         
-        return res.json(myPending);
+        // Add policy trigger metadata to orders
+        const orderMetaFile = path.join(__dirname, '../data/order_meta.json');
+        let orderMeta = {};
+        
+        try {
+            if (fs.existsSync(orderMetaFile)) {
+                const data = fs.readFileSync(orderMetaFile, 'utf8');
+                orderMeta = JSON.parse(data);
+            }
+        } catch (err) {
+            console.error('Error loading order metadata:', err);
+        }
+        
+        const ordersWithMeta = myPending.map((order: any) => {
+            const meta = orderMeta[order.id] || { policyTriggered: false, policies: [] };
+            return {
+                ...order,
+                policyTriggered: meta.policyTriggered,
+                policyReasons: meta.policies
+            };
+        });
+        
+        return res.json(ordersWithMeta);
     } catch (error) {
         return res.status(500).json({ error: `Error fetching pending orders: ${error}` });
     }
@@ -360,6 +382,9 @@ app.post("/api/order", async (req, res) => {
             accountId: account.id,
             sku,
             quantity,
+            // This flag tells the seller service this is an agent order
+            // When agent=true, the seller service has a 1/10 random chance of requiring approval
+            // This is INDEPENDENT of our policy system, which is evaluated above
             agent: agentMode || policyResult.requiresApproval, // Force agent flag if policies triggered
         };
 
@@ -389,7 +414,33 @@ app.post("/api/order", async (req, res) => {
         }
         
         const order = await orderResponse.json();
-        agentAuditLog(`Order placed: ${JSON.stringify(order)}`);
+        
+        // Mark if this order required approval due to policies
+        const orderId = order.id || 'unknown';
+        agentAuditLog(`Order placed: ${JSON.stringify(order)}, policy triggered: ${policyResult.requiresApproval}`);
+        
+        // Store metadata about this order in a side file to track policy triggers
+        try {
+            const orderMetaFile = path.join(__dirname, '../data/order_meta.json');
+            let orderMeta = {};
+            
+            if (fs.existsSync(orderMetaFile)) {
+                const data = fs.readFileSync(orderMetaFile, 'utf8');
+                orderMeta = JSON.parse(data);
+            }
+            
+            // Store whether this order triggered policies
+            orderMeta[orderId] = {
+                policyTriggered: policyResult.requiresApproval,
+                policies: policyResult.requiresApproval ? 
+                    policyResult.evaluations.filter(e => e.triggered).map(e => e.policyName) : 
+                    []
+            };
+            
+            fs.writeFileSync(orderMetaFile, JSON.stringify(orderMeta, null, 2));
+        } catch (err) {
+            console.error('Error storing order metadata:', err);
+        }
         
         // Update wallet balance
         account.wallet -= totalCost;

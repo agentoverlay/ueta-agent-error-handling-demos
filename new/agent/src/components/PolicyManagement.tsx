@@ -357,7 +357,13 @@ export default function PolicyManagement() {
   return (
     <div className="bg-white text-black rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Approval Policies</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Approval Policies</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Define rules that will automatically flag orders for approval.
+            <strong>Note:</strong> These policies are in addition to the system's built-in 1/10 random approval for agent orders.
+          </p>
+        </div>
         {!isCreating && !isEditing && (
           <button
             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
