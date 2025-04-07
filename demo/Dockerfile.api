@@ -17,8 +17,12 @@ RUN mkdir -p src/data \
     && echo '[]' > src/data/policies.json \
     && echo '{}' > src/data/order_meta.json
 
+# Set the environment variables
+ENV SELLER_URL="http://seller-api:4000"
+ENV CONSUMER_URL="http://consumer:5002"
+
 # Expose the port the app runs on
 EXPOSE 3001
 
-# Start the API server 
+# Start the API server directly with tsx
 CMD ["pnpm", "agent-api"]

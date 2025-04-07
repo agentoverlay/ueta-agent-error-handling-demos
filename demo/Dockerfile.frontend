@@ -16,12 +16,8 @@ ENV NEXT_LINT_IGNORE=true
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy our custom build script
-COPY build-no-lint.sh ./build-no-lint.sh
-RUN chmod +x ./build-no-lint.sh
-
-# Build the Next.js application without linting
-RUN ./build-no-lint.sh
+# Build the Next.js application
+RUN pnpm build
 
 # Expose the port the app runs on
 EXPOSE 3000

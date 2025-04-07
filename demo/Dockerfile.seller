@@ -17,5 +17,5 @@ RUN mkdir -p src/data
 # Expose the port the app runs on
 EXPOSE 4000
 
-# Start the Seller API server
+# Start the Seller API server directly with tsx
 CMD ["pnpm", "seller-api"]

@@ -1,67 +1,21 @@
-#!/bin/bash
+#!/bin/sh
+# ensure-files.sh
+# Ensure required files and directories exist
 
-# Ensure account.json exists
-if [ ! -f "account.json" ]; then
-  echo "{}" > account.json
-  echo "Created empty account.json file"
-fi
-
-# Ensure agent_audit.log exists
-if [ ! -f "agent_audit.log" ]; then
-  touch agent_audit.log
-  echo "Created empty agent_audit.log file"
-fi
-
-# Ensure data directory exists
+# Create necessary directories
 mkdir -p src/data
+mkdir -p data/seller
 
-# Ensure policies.json exists
-if [ ! -f "src/data/policies.json" ]; then
-  cat > src/data/policies.json << 'EOF'
-[
-  {
-    "id": "policy-1",
-    "name": "High Value Order",
-    "description": "Orders with total value exceeding $1000 require human approval",
-    "target": "orderTotal",
-    "operator": ">",
-    "value": 1000,
-    "enabled": true,
-    "createdAt": "2025-04-05T00:00:00.000Z"
-  },
-  {
-    "id": "policy-2",
-    "name": "Bulk Order",
-    "description": "Orders with quantity exceeding 10 units require human approval",
-    "target": "orderQuantity",
-    "operator": ">",
-    "value": 10,
-    "enabled": true,
-    "createdAt": "2025-04-05T00:00:00.000Z"
-  },
-  {
-    "id": "policy-3",
-    "name": "Restricted SKU",
-    "description": "Orders for product PROD3 require human approval",
-    "target": "productSku",
-    "operator": "=",
-    "value": "PROD3",
-    "enabled": false,
-    "createdAt": "2025-04-05T00:00:00.000Z"
-  },
-  {
-    "id": "policy-4",
-    "name": "Low Balance Protection",
-    "description": "Orders that would reduce wallet balance below $100 require human approval",
-    "target": "walletBalance",
-    "operator": "<",
-    "value": 100,
-    "enabled": true,
-    "createdAt": "2025-04-05T00:00:00.000Z"
-  }
-]
-EOF
-  echo "Created default policies.json file"
-fi
+# Create empty files with default content if they don't exist
+[ -f src/account.json ] || echo '{"id":"default","wallet":1000}' > src/account.json
+[ -f src/agent_audit.log ] || touch src/agent_audit.log
+[ -f src/data/policies.json ] || echo '[]' > src/data/policies.json
+[ -f src/data/order_meta.json ] || echo '{}' > src/data/order_meta.json
 
-echo "All required files are ready"
+# Ensure data/seller directory has required files
+[ -f data/seller/products.json ] || echo '[]' > data/seller/products.json
+[ -f data/seller/orders.json ] || echo '[]' > data/seller/orders.json
+[ -f data/seller/seller_policies.json ] || echo '[]' > data/seller/seller_policies.json
+[ -f data/seller/seller_audit.log ] || touch data/seller/seller_audit.log
+
+echo "All required files and directories have been created."

@@ -23,6 +23,8 @@ services:
       - ./account.json:/app/src/account.json
       - ./agent_audit.log:/app/src/agent_audit.log
       - ./src/data/policies.json:/app/src/data/policies.json
+      # Persist the built files
+      - ./dist/api:/app/dist/api
     networks:
       - ueta-network
 

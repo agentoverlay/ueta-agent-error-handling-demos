@@ -11,17 +11,6 @@
     "policyType": "agent"
   },
   {
-    "id": "policy-agent-1",
-    "name": "Agent Transactions",
-    "description": "Identify and flag orders placed through the agent interface",
-    "target": "agentTransaction",
-    "operator": "=",
-    "value": "true",
-    "enabled": true,
-    "createdAt": "2025-04-06T00:00:00.000Z",
-    "policyType": "agent"
-  },
-  {
     "id": "policy-2",
     "name": "Bulk Order",
     "description": "Orders with quantity exceeding 10 units require human approval",
@@ -29,11 +18,6 @@
     "operator": ">",
     "value": 10,
     "enabled": true,
-    "createdAt": "2025-04-05T00:00:00.000Z"
-  },
-  {
-    "id": "policy-3",
-    "enabled": false,
     "createdAt": "2025-04-05T00:00:00.000Z"
   },
   {

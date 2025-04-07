@@ -13,7 +13,8 @@
     "minimal-seller": "npx tsx src/api/seller/minimal-seller.ts",
     "test-server": "npx tsx src/api/seller/test-server.ts",
     "validate-paths": "npx tsx src/api/seller/validate-paths.ts",
-    "debug-seller": "npx tsx debug-seller-api.js"
+    "debug-seller": "npx tsx debug-seller-api.js",
+    "local": "sh run-local.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/express": "^5.0.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

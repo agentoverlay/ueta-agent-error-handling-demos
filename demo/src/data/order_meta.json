@@ -277,5 +277,92 @@
       "Agent Transactions"
     ],
     "sellerOrderId": "1c39d398-3958-44a5-bc1d-9f95c8aeaaf1"
+  },
+  "d2489078-ba2c-480a-aab6-8341674d98df": {
+    "id": "d2489078-ba2c-480a-aab6-8341674d98df",
+    "accountId": "5f60eaa0-a6fc-4118-aefb-86f884a4013a",
+    "sku": "APPLES",
+    "quantity": 1,
+    "totalPrice": 2.99,
+    "orderDate": "2025-04-07T04:40:31.057Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions"
+    ],
+    "sellerOrderId": "3b6c0310-6801-4266-ac27-adf15f4611ef"
+  },
+  "22f28dd2-cb0a-46e2-b815-58652f731344": {
+    "id": "22f28dd2-cb0a-46e2-b815-58652f731344",
+    "accountId": "5f60eaa0-a6fc-4118-aefb-86f884a4013a",
+    "sku": "APPLES",
+    "quantity": 1,
+    "totalPrice": 2.99,
+    "orderDate": "2025-04-07T04:41:11.187Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions"
+    ],
+    "sellerOrderId": "cf36eaa3-c93b-45de-a5d3-2ba81bd16658"
+  },
+  "7b01e12d-c10d-483b-87c5-1b5cdbeb10d4": {
+    "id": "7b01e12d-c10d-483b-87c5-1b5cdbeb10d4",
+    "accountId": "5f60eaa0-a6fc-4118-aefb-86f884a4013a",
+    "sku": "APPLES",
+    "quantity": 1,
+    "totalPrice": 2.99,
+    "orderDate": "2025-04-07T04:45:31.490Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions"
+    ],
+    "sellerOrderId": "97b0a8c8-71f5-4a88-bb3f-1afaada7b016"
+  },
+  "6037661c-e641-49a8-8003-f0d498260601": {
+    "id": "6037661c-e641-49a8-8003-f0d498260601",
+    "accountId": "5f60eaa0-a6fc-4118-aefb-86f884a4013a",
+    "sku": "APPLES",
+    "quantity": 1,
+    "totalPrice": 2.99,
+    "orderDate": "2025-04-07T04:45:55.178Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions"
+    ],
+    "sellerOrderId": "78058a98-f671-4354-86fe-074e53e049ce"
+  },
+  "ecb90eb9-2f04-4656-9c26-668bbb002307": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "1a45e5eb-defd-46a4-b9f9-dbb44608fcc2": {
+    "id": "1a45e5eb-defd-46a4-b9f9-dbb44608fcc2",
+    "accountId": "5f60eaa0-a6fc-4118-aefb-86f884a4013a",
+    "sku": "COFFEE",
+    "quantity": 13,
+    "totalPrice": 116.87,
+    "orderDate": "2025-04-07T04:46:58.495Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "1d239264-d6e5-4bdf-991f-b08ccdeb9c6c"
+  },
+  "ac9ee06b-c81b-41ab-a5f6-8a2488413be7": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "4a2caed7-de6c-4f85-b1e7-b56680ec2307": {
+    "policyTriggered": false,
+    "policies": []
   }
 }

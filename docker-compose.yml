@@ -9,12 +9,16 @@ services:
     ports:
       - "4000:4000"
     environment:
+      - SELLER_PORT=4000
       - SELLER_URL=http://localhost:4000
       - CONSUMER_URL=http://localhost:5002
+      - NODE_ENV=production
     networks:
       - ueta-network
     volumes:
       - ./demo/src/data:/app/src/data
+      # Add this volume for direct TS execution if needed
+      - ./demo/src/api:/app/src/api
 
   # Agent API Service
   agent-api:
@@ -27,12 +31,15 @@ services:
       - API_PORT=3001
       - NEXT_PUBLIC_API_URL=http://localhost:3001
       - SELLER_URL=http://seller-api:4000
+      - NODE_ENV=production
     networks:
       - ueta-network
     volumes:
       - ./demo/src/data:/app/src/data
       - ./demo/src/account.json:/app/src/account.json
       - ./demo/src/agent_audit.log:/app/src/agent_audit.log
+      # Add this volume for direct TS execution if needed
+      - ./demo/src/api:/app/src/api
     depends_on:
       - seller-api
 
