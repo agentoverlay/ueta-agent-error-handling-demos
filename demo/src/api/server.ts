@@ -39,6 +39,7 @@ function agentAuditLog(message: string) {
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Add support for urlencoded data
 
 // Register the seller API router
 app.use("/api/seller", sellerApiRouter);
@@ -635,6 +636,10 @@ app.post("/api/order/approve", async (req, res) => {
         
         // If this is a local order awaiting approval, send it to the seller
         if (localOrder && localOrder.status === "pending_confirmation") {
+            // Read account information
+            const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
+            const account = JSON.parse(accountData);
+            
             // Create payload for the seller
             const payload = {
                 accountId: localOrder.accountId,

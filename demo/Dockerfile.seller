@@ -11,13 +11,11 @@ RUN npm install -g pnpm && pnpm install
 # Copy the source code
 COPY . .
 
-# Create necessary files if they don't exist
-RUN touch account.json agent_audit.log \
-    && mkdir -p src/data \
-    && echo '[]' > src/data/policies.json
+# Create necessary directories if they don't exist
+RUN mkdir -p src/data
 
 # Expose the port the app runs on
-EXPOSE 3001
+EXPOSE 4000
 
-# Start the API server
-CMD ["pnpm", "run", "agent-api"]
+# Start the Seller API server
+CMD ["pnpm", "seller-api"]

@@ -1,0 +1,30 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
+
+# Install dependencies
+RUN npm install -g pnpm && pnpm install
+
+# Copy the source code
+COPY . .
+
+# Set environment variables to ignore linting during build
+ENV NEXT_LINT_IGNORE=true
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy our custom build script
+COPY build-no-lint.sh ./build-no-lint.sh
+RUN chmod +x ./build-no-lint.sh
+
+# Build the Next.js application without linting
+RUN ./build-no-lint.sh
+
+# Expose the port the app runs on
+EXPOSE 3000
+
+# Start the Next.js production server
+CMD ["pnpm", "start"]

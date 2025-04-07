@@ -123,7 +123,7 @@
     "quantity": 2,
     "totalPrice": 17.98,
     "orderDate": "2025-04-07T02:56:07.678Z",
-    "status": "pending_confirmation"
+    "status": "delivered"
   },
   {
     "id": "e09ef356-7e91-4c69-b7ba-d8aa234f6459",
@@ -142,5 +142,23 @@
     "totalPrice": 4.47,
     "orderDate": "2025-04-07T02:56:16.702Z",
     "status": "pending_confirmation"
+  },
+  {
+    "id": "8e064050-8b9b-47e0-9937-e7dfd2b6a518",
+    "accountId": "4b82ccc9-37e3-41cc-9bb5-90a951e2ab1c",
+    "sku": "APPLES",
+    "quantity": 1,
+    "totalPrice": 2.99,
+    "orderDate": "2025-04-07T03:21:48.383Z",
+    "status": "delivered"
+  },
+  {
+    "id": "d476d757-08f7-4ba1-959c-ae0e6eff8277",
+    "accountId": "4b82ccc9-37e3-41cc-9bb5-90a951e2ab1c",
+    "sku": "APPLES",
+    "quantity": 1,
+    "totalPrice": 2.99,
+    "orderDate": "2025-04-07T03:26:33.638Z",
+    "status": "delivered"
   }
 ]

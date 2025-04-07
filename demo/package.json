@@ -16,6 +16,7 @@
     "debug-seller": "npx tsx debug-seller-api.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "next": "15.2.4",

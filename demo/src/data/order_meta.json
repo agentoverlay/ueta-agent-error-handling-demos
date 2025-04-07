@@ -195,12 +195,13 @@
     "quantity": 1,
     "totalPrice": 2.99,
     "orderDate": "2025-04-07T02:55:36.616Z",
-    "status": "pending_confirmation",
+    "status": "sent_to_seller",
     "agentMode": false,
     "policyTriggered": true,
     "policyReasons": [
       "Low Balance Protection"
-    ]
+    ],
+    "sellerOrderId": "d476d757-08f7-4ba1-959c-ae0e6eff8277"
   },
   "df4f54d3-586a-4276-865b-03255a004395": {
     "id": "df4f54d3-586a-4276-865b-03255a004395",
@@ -215,6 +216,35 @@
     "policyReasons": [
       "Agent Transactions",
       "Low Balance Protection"
+    ]
+  },
+  "c2101747-0e30-425e-9135-a03e5bb77970": {
+    "id": "c2101747-0e30-425e-9135-a03e5bb77970",
+    "accountId": "4b82ccc9-37e3-41cc-9bb5-90a951e2ab1c",
+    "sku": "APPLES",
+    "quantity": 10,
+    "totalPrice": 29.900000000000002,
+    "orderDate": "2025-04-07T03:20:34.615Z",
+    "status": "pending_confirmation",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions"
+    ]
+  },
+  "6801dabe-e34e-4a4a-a41e-e3088dc21101": {
+    "id": "6801dabe-e34e-4a4a-a41e-e3088dc21101",
+    "accountId": "5f60eaa0-a6fc-4118-aefb-86f884a4013a",
+    "sku": "APPLES",
+    "quantity": 20,
+    "totalPrice": 59.800000000000004,
+    "orderDate": "2025-04-07T03:37:38.837Z",
+    "status": "pending_confirmation",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions",
+      "Bulk Order"
     ]
   }
 }

@@ -1,100 +1,45 @@
 version: '3.8'
 
 services:
-  seller:
+  # Seller API Service
+  seller-api:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.seller
+      context: ./demo
+      dockerfile: Dockerfile.seller
     ports:
       - "4000:4000"
     environment:
-      - CONSUMER_PORT=5002
-      - SELLER_URL=http://seller:4000
-      - CONSUMER_URL=http://consumer:5002
+      - SELLER_URL=http://localhost:4000
+      - CONSUMER_URL=http://localhost:5002
     networks:
       - ueta-network
     volumes:
-      - ./audit.log:/app/audit.log
-    command: ["pnpm", "run", "start:seller", "--", "--with-error"]
+      - ./demo/src/data:/app/src/data
 
-  consumer:
+  # Agent API Service
+  agent-api:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.consumer
-    ports:
-      - "5002:5002"
-    environment:
-      - CONSUMER_PORT=5002
-    networks:
-      - ueta-network
-    command: ["pnpm", "run", "start:consumer"]
-    depends_on:
-      - seller
-
-  # Classic Agent CLI and Dashboard
-  agent:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.agent
-    ports:
-      - "7001:7001"
-    networks:
-      - ueta-network
-    volumes:
-      - ./agent_audit.log:/app/agent_audit.log
-      - ./account.json:/app/account.json
-    environment:
-      - SELLER_URL=http://seller:4000
-      - CONSUMER_URL=http://consumer:5002
-    command: ["pnpm", "run", "start:agent", "agent"]
-    depends_on:
-      - seller
-      - consumer
-
-  agent-dashboard:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.agent
-    ports:
-      - "6001:6001"
-    networks:
-      - ueta-network
-    volumes:
-      - ./account.json:/app/account.json
-    environment:
-      - SELLER_URL=http://seller:4000
-      - CONSUMER_URL=http://consumer:5002
-    command: ["pnpm", "run", "start:agent", "dashboard"]
-    depends_on:
-      - seller
-      - consumer
-      - agent
-
-  # New Agent Implementation with NextJS UI
-  new-agent-api:
-    build:
-      context: ./new/agent
+      context: ./demo
       dockerfile: Dockerfile.api
     ports:
       - "3001:3001"
     environment:
       - API_PORT=3001
       - NEXT_PUBLIC_API_URL=http://localhost:3001
-      - SELLER_URL=http://seller:4000
-      - CONSUMER_URL=http://consumer:5002
+      - SELLER_URL=http://seller-api:4000
     networks:
       - ueta-network
     volumes:
-      - ./new/agent/account.json:/app/src/account.json
-      - ./new/agent/agent_audit.log:/app/src/agent_audit.log
-      - ./new/agent/src/data/policies.json:/app/src/data/policies.json
+      - ./demo/src/data:/app/src/data
+      - ./demo/src/account.json:/app/src/account.json
+      - ./demo/src/agent_audit.log:/app/src/agent_audit.log
     depends_on:
-      - seller
-      - consumer
+      - seller-api
 
-  new-agent-frontend:
+  # UI Service (NextJS Frontend)
+  ui:
     build:
-      context: ./new/agent
+      context: ./demo
       dockerfile: Dockerfile.frontend
     ports:
       - "3000:3000"
@@ -104,8 +49,10 @@ services:
     networks:
       - ueta-network
     depends_on:
-      - new-agent-api
+      - agent-api
+      - seller-api
 
+  # Prometheus for monitoring
   prometheus:
     image: prom/prometheus:v2.37.0
     ports:
@@ -115,9 +62,6 @@ services:
       - prometheus-data:/prometheus
     networks:
       - ueta-network
-    environment:
-      - SELLER_URL=http://seller:4000
-      - CONSUMER_URL=http://consumer:5002
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -125,11 +69,10 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
     depends_on:
-      - seller
-      - consumer
-      - agent
-      - agent-dashboard
+      - agent-api
+      - seller-api
 
+  # Grafana for dashboards
   grafana:
     image: grafana/grafana:9.0.3
     ports:
@@ -146,8 +89,6 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - SELLER_URL=http://seller:4000
-      - CONSUMER_URL=http://consumer:5002
 
 networks:
   ueta-network:
