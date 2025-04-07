@@ -100,9 +100,14 @@ export class PolicyService {
     quantity: number;
     totalPrice: number;
     walletBalance: number;
+    isAgentTransaction?: boolean;
   }): PolicyCheckResult {
     const policies = this.loadPolicies();
     const enabledPolicies = policies.filter(p => p.enabled);
+    
+    // Log if this is an agent transaction
+    const isAgentTransaction = orderData.isAgentTransaction === true;
+    console.log(`[Policy Check] Is agent transaction: ${isAgentTransaction}`);
     
     console.log(`[Policy Check] Checking order: SKU=${orderData.sku}, quantity=${orderData.quantity}, totalPrice=${orderData.totalPrice}, walletBalance=${orderData.walletBalance}`);
     console.log(`[Policy Check] Found ${enabledPolicies.length} enabled policies:`, enabledPolicies);
@@ -122,10 +127,29 @@ export class PolicyService {
       let triggered = false;
       let reason = '';
       
+      // If this is a seller policy and we're not checking agent transactions, skip
+      if (policy.policyType === 'seller' && !isAgentTransaction) {
+        console.log(`[Policy Check] Skipping seller policy for non-agent transaction: ${policy.name}`);
+        return {
+          policyId: policy.id,
+          policyName: policy.name,
+          triggered: false,
+          reason: undefined
+        };
+      }
+      
+      // If this is an agent policy and we're checking agent transactions, apply
+      // If there's no policyType specified, treat as a universal policy
       switch (policy.target) {
+        case PolicyTarget.AGENT_TRANSACTION:
+          // This will trigger only for agent transactions
+          triggered = isAgentTransaction === Boolean(policy.value);
+          reason = triggered ? `Agent transaction detected` : '';
+          break;
+          
         case PolicyTarget.ORDER_TOTAL:
           triggered = this.evaluateCondition(orderData.totalPrice, policy.operator, Number(policy.value));
-          reason = triggered ? `Order total ($${orderData.totalPrice}) ${policy.operator} $${policy.value}` : '';
+          reason = triggered ? `Order total (${orderData.totalPrice}) ${policy.operator} ${policy.value}` : '';
           break;
           
         case PolicyTarget.ORDER_QUANTITY:
@@ -140,7 +164,7 @@ export class PolicyService {
           
         case PolicyTarget.WALLET_BALANCE:
           triggered = this.evaluateCondition(orderData.walletBalance, policy.operator, Number(policy.value));
-          reason = triggered ? `Wallet balance ($${orderData.walletBalance}) ${policy.operator} $${policy.value}` : '';
+          reason = triggered ? `Wallet balance (${orderData.walletBalance}) ${policy.operator} ${policy.value}` : '';
           break;
           
         case PolicyTarget.TIME_OF_DAY:

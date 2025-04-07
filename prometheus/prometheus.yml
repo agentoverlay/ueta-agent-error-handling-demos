@@ -30,3 +30,10 @@ scrape_configs:
       - targets: ['agent-dashboard:6001']
         labels:
           service: 'agent-dashboard'
+          
+  - job_name: 'new-agent-api'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['new-agent-api:3001']
+        labels:
+          service: 'new-agent-api'

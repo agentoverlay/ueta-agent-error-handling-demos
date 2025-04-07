@@ -17,6 +17,7 @@ import { z } from "zod";
 import { config } from "../lib/config";
 import { PolicyService } from "../lib/policy-service";
 import { FlagPolicy, PolicyOperator, PolicyTarget } from "../lib/policy-types";
+import { sellerApiRouter } from "./seller-api";
 
 // Constants
 const ACCOUNT_FILE = path.join(__dirname, "../account.json");
@@ -38,6 +39,9 @@ function agentAuditLog(message: string) {
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Register the seller API router
+app.use("/api/seller", sellerApiRouter);
 
 // Set up routes
 app.get("/api/health", (req, res) => {
@@ -115,42 +119,56 @@ app.get("/api/orders/pending", async (req, res) => {
         const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
         const account = JSON.parse(accountData);
         
-        const response = await fetch(`${config.sellerUrl}/pending`);
-        if (!response.ok) {
-            return res.status(response.status).json({ 
-                error: "Error fetching pending orders from business API." 
-            });
-        }
-        
-        const pendingOrders = await response.json();
-        // Filter orders for this agent's account
-        const myPending = pendingOrders.filter(
-            (order: any) => order.accountId === account.id
-        );
-        
-        // Add policy trigger metadata to orders
+        // First, get locally stored pending orders
         const orderMetaFile = path.join(__dirname, '../data/order_meta.json');
-        let orderMeta = {};
+        let localPendingOrders = [];
         
         try {
             if (fs.existsSync(orderMetaFile)) {
                 const data = fs.readFileSync(orderMetaFile, 'utf8');
-                orderMeta = JSON.parse(data);
+                const orderMeta = JSON.parse(data);
+                
+                // Get all orders that are pending and match this account
+                localPendingOrders = Object.values(orderMeta)
+                    .filter((order: any) => 
+                        order.status === "pending_confirmation" && 
+                        order.accountId === account.id
+                    );
             }
         } catch (err) {
             console.error('Error loading order metadata:', err);
         }
         
-        const ordersWithMeta = myPending.map((order: any) => {
-            const meta = orderMeta[order.id] || { policyTriggered: false, policies: [] };
-            return {
-                ...order,
-                policyTriggered: meta.policyTriggered,
-                policyReasons: meta.policies
-            };
-        });
+        // Then, get orders from the seller that are pending
+        const response = await fetch(`${config.sellerUrl}/pending`);
+        let sellerPendingOrders = [];
         
-        return res.json(ordersWithMeta);
+        if (response.ok) {
+            const pendingOrders = await response.json();
+            // Filter orders for this agent's account
+            sellerPendingOrders = pendingOrders.filter(
+                (order: any) => order.accountId === account.id
+            );
+            
+            // Add policy trigger metadata to orders from seller
+            sellerPendingOrders = sellerPendingOrders.map((order: any) => {
+                const meta = {};
+                return {
+                    ...order,
+                    policyTriggered: false, // these went through agent approval already
+                    policyReasons: [],
+                    source: "seller"
+                };
+            });
+        }
+        
+        // Combine both lists of pending orders
+        const allPendingOrders = [
+            ...localPendingOrders.map((order: any) => ({...order, source: "agent"})),
+            ...sellerPendingOrders
+        ];
+        
+        return res.json(allPendingOrders);
     } catch (error) {
         return res.status(500).json({ error: `Error fetching pending orders: ${error}` });
     }
@@ -271,7 +289,7 @@ app.delete("/api/policies/:id", (req, res) => {
 // Check if an order would require approval
 app.post("/api/policies/check", (req, res) => {
     try {
-        const { sku, quantity, totalPrice, walletBalance } = req.body;
+        const { sku, quantity, totalPrice, walletBalance, isAgentTransaction } = req.body;
         
         if (!sku || !quantity || totalPrice === undefined || walletBalance === undefined) {
             return res.status(400).json({ error: "Required fields missing" });
@@ -281,7 +299,8 @@ app.post("/api/policies/check", (req, res) => {
             sku,
             quantity,
             totalPrice,
-            walletBalance
+            walletBalance,
+            isAgentTransaction
         });
         
         return res.json(result);
@@ -317,10 +336,79 @@ app.get("/api/logs", (req, res) => {
     }
 });
 
+// Handle adding funds to wallet
+app.post("/api/ueta-add-funds", (req, res) => {
+    try {
+        const { amount } = req.body;
+        
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: "Please provide a valid amount greater than 0." });
+        }
+        
+        if (!fs.existsSync(ACCOUNT_FILE)) {
+            return res.status(404).json({ error: "Account not found. Create an account first." });
+        }
+        
+        const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
+        const account = JSON.parse(accountData);
+        
+        // Update wallet balance
+        account.wallet += amount;
+        fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
+        
+        agentAuditLog(`Added funds to wallet: ${amount.toFixed(2)}. New balance: ${account.wallet.toFixed(2)}`);
+        
+        return res.json({
+            message: "Funds added successfully",
+            newBalance: account.wallet
+        });
+    } catch (error) {
+        return res.status(500).json({ error: `Error adding funds: ${error}` });
+    }
+});
+
+// Handle withdrawing funds from wallet
+app.post("/api/ueta-withdraw-funds", (req, res) => {
+    try {
+        const { amount } = req.body;
+        
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: "Please provide a valid amount greater than 0." });
+        }
+        
+        if (!fs.existsSync(ACCOUNT_FILE)) {
+            return res.status(404).json({ error: "Account not found. Create an account first." });
+        }
+        
+        const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
+        const account = JSON.parse(accountData);
+        
+        // Check if user has enough funds
+        if (account.wallet < amount) {
+            return res.status(400).json({ 
+                error: `Insufficient funds. Current balance: ${account.wallet.toFixed(2)}` 
+            });
+        }
+        
+        // Update wallet balance
+        account.wallet -= amount;
+        fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
+        
+        agentAuditLog(`Withdrew funds from wallet: ${amount.toFixed(2)}. New balance: ${account.wallet.toFixed(2)}`);
+        
+        return res.json({
+            message: "Funds withdrawn successfully",
+            newBalance: account.wallet
+        });
+    } catch (error) {
+        return res.status(500).json({ error: `Error withdrawing funds: ${error}` });
+    }
+});
+
 // Place order
 app.post("/api/order", async (req, res) => {
     try {
-        const { sku, quantity, agentMode = false } = req.body;
+        const { sku, quantity, agentMode = false, simulateError = false } = req.body;
         
         if (!sku || !quantity) {
             return res.status(400).json({ error: "SKU and quantity are required." });
@@ -361,7 +449,15 @@ app.post("/api/order", async (req, res) => {
             });
         }
         
-        const totalCost = product.price * quantity;
+        // Apply error simulation if enabled (multiply quantity by 10)
+        const actualQuantity = simulateError ? quantity * 10 : quantity;
+        
+        if (simulateError) {
+            agentAuditLog(`Error simulation active: Multiplying quantity from ${quantity} to ${actualQuantity}`);
+            console.log(`[API] Error simulation active! Multiplying quantity from ${quantity} to ${actualQuantity}`);
+        }
+        
+        const totalCost = product.price * actualQuantity;
         if (account.wallet < totalCost) {
             agentAuditLog(`Order failed: Insufficient funds. Wallet: ${account.wallet}, needed: ${totalCost}`);
             return res.status(400).json({
@@ -372,34 +468,82 @@ app.post("/api/order", async (req, res) => {
         // Check if order requires approval based on policies
         const policyResult = PolicyService.checkPolicies({
             sku,
-            quantity,
+            quantity: actualQuantity,
             totalPrice: totalCost,
-            walletBalance: account.wallet - totalCost // Balance after order
+            walletBalance: account.wallet - totalCost, // Balance after order
+            isAgentTransaction: agentMode // Pass the agent mode flag to policy checks
         });
 
         // Create payload for the order
         const payload = {
             accountId: account.id,
             sku,
-            quantity,
-            // This flag tells the seller service this is an agent order
-            // When agent=true, the seller service has a 1/10 random chance of requiring approval
-            // This is INDEPENDENT of our policy system, which is evaluated above
-            agent: agentMode || policyResult.requiresApproval, // Force agent flag if policies triggered
+            quantity: actualQuantity, // Use the potentially multiplied quantity
+            agent: agentMode,
         };
 
         // Log policy evaluation
         console.log(`[API] Policy check result: requires approval = ${policyResult.requiresApproval}`);
         console.log(`[API] Order payload to seller:`, payload);
         
+        // Check if any policy was triggered requiring approval
         if (policyResult.requiresApproval) {
             const triggerReasons = policyResult.evaluations
                 .filter(e => e.triggered)
                 .map(e => e.reason)
                 .join('; ');
             agentAuditLog(`Order requires approval due to policies: ${triggerReasons}`);
+            
+            // Store the order locally with a pending_approval status
+            const pendingOrder = {
+                id: uuid(),
+                accountId: account.id,
+                sku,
+                quantity: actualQuantity,
+                totalPrice: totalCost,
+                orderDate: new Date(),
+                status: "pending_confirmation",
+                agentMode: agentMode,
+                policyTriggered: true,
+                policyReasons: policyResult.evaluations
+                    .filter(e => e.triggered)
+                    .map(e => e.policyName)
+            };
+            
+            // Store order metadata
+            try {
+                const orderMetaFile = path.join(__dirname, '../data/order_meta.json');
+                let orderMeta = {};
+                
+                if (fs.existsSync(orderMetaFile)) {
+                    const data = fs.readFileSync(orderMetaFile, 'utf8');
+                    orderMeta = JSON.parse(data);
+                }
+                
+                // Store the entire pending order in the metadata
+                orderMeta[pendingOrder.id] = pendingOrder;
+                
+                fs.writeFileSync(orderMetaFile, JSON.stringify(orderMeta, null, 2));
+                agentAuditLog(`Stored pending order awaiting approval: ${pendingOrder.id}`);
+            } catch (err) {
+                console.error('Error storing order metadata:', err);
+            }
+            
+            // Update wallet balance even though order hasn't been sent yet
+            account.wallet -= totalCost;
+            fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
+            agentAuditLog(`Updated wallet balance: ${account.wallet}`);
+            
+            return res.json({
+                message: "Order requires approval before sending to seller",
+                order: pendingOrder,
+                walletBalance: account.wallet,
+                requiresApproval: true,
+                policyEvaluations: policyResult.evaluations.filter(e => e.triggered)
+            });
         }
         
+        // If no policies were triggered, send order directly to seller
         
         const orderResponse = await fetch(`${config.sellerUrl}/order`, {
             method: "POST",
@@ -471,6 +615,68 @@ app.post("/api/order/approve", async (req, res) => {
             return res.status(400).json({ error: "OrderID is required." });
         }
         
+        // First, check if this is a local pending order that needs to be sent to seller
+        const orderMetaFile = path.join(__dirname, '../data/order_meta.json');
+        let localOrder = null;
+        let orderMeta = {};
+        
+        try {
+            if (fs.existsSync(orderMetaFile)) {
+                const data = fs.readFileSync(orderMetaFile, 'utf8');
+                orderMeta = JSON.parse(data);
+                
+                if (orderMeta[orderId]) {
+                    localOrder = orderMeta[orderId];
+                }
+            }
+        } catch (err) {
+            console.error('Error loading order metadata:', err);
+        }
+        
+        // If this is a local order awaiting approval, send it to the seller
+        if (localOrder && localOrder.status === "pending_confirmation") {
+            // Create payload for the seller
+            const payload = {
+                accountId: localOrder.accountId,
+                sku: localOrder.sku,
+                quantity: localOrder.quantity,
+                agent: localOrder.agentMode || false,
+            };
+            
+            // Send to seller
+            const orderResponse = await fetch(`${config.sellerUrl}/order`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            
+            if (!orderResponse.ok) {
+                const errorData = await orderResponse.json();
+                agentAuditLog(`Error sending approved order to seller: ${JSON.stringify(errorData)}`);
+                return res.status(orderResponse.status).json(errorData);
+            }
+            
+            const sellerOrder = await orderResponse.json();
+            
+            // Mark local order as sent to seller
+            localOrder.status = "sent_to_seller";
+            localOrder.sellerOrderId = sellerOrder.id;
+            orderMeta[orderId] = localOrder;
+            
+            console.log(`Order approved and sent to seller: ${orderId} -> ${sellerOrder.id}. Updated wallet balance: ${account.wallet}`);
+            
+            // Update the metadata file
+            fs.writeFileSync(orderMetaFile, JSON.stringify(orderMeta, null, 2));
+            
+            agentAuditLog(`Approved and sent order to seller: ${orderId} -> ${sellerOrder.id}`);
+            
+            return res.json({
+                message: "Order approved and sent to seller",
+                order: sellerOrder
+            });
+        }
+        
+        // If it's not a local order, it must be a seller order needing approval
         const response = await fetch(`${config.sellerUrl}/approve`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -483,7 +689,7 @@ app.post("/api/order/approve", async (req, res) => {
         }
         
         const result = await response.json();
-        agentAuditLog(`Order approved: ${orderId}`);
+        agentAuditLog(`Order approved at seller: ${orderId}`);
         
         return res.json({
             message: "Order approved successfully",

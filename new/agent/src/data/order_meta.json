@@ -44,5 +44,177 @@
     "policies": [
       "Bulk Order"
     ]
+  },
+  "f2be14dd-f72e-40fc-a83c-0d7bcdd2e7be": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "7b63033f-915d-4241-adee-8e53b374d0b8": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "66924100-8ddb-472d-83cc-772701b7acb1": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  },
+  "655004ca-68f7-4264-a86b-15f889c6436a": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  },
+  "572132f0-b4fb-43b2-9b39-2cf29e666e8c": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  },
+  "fbb1fd1d-26b4-495b-a5f2-6913c0239ecf": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "f308c4cb-022b-42a9-98ea-381ef0558f95": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  },
+  "2ffb36c0-7ad4-4d2b-9477-9302833298cb": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  },
+  "4c6b9f5a-ab6c-457c-9ea4-5d77685e65a4": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  },
+  "53560893-5c1b-498e-9565-e9b173a7bc63": {
+    "policyTriggered": true,
+    "policies": [
+      "Bulk Order"
+    ]
+  },
+  "f6d54102-aff6-470e-814e-2e329ba9070b": {
+    "policyTriggered": true,
+    "policies": [
+      "Agent Transactions"
+    ]
+  },
+  "d9b9e8ae-4cb6-40fc-a476-f5d612a171bd": {
+    "policyTriggered": true,
+    "policies": [
+      "Agent Transactions"
+    ]
+  },
+  "9698908e-1f3c-432c-83fc-be810c827328": {
+    "policyTriggered": true,
+    "policies": [
+      "Agent Transactions",
+      "Bulk Order"
+    ]
+  },
+  "649d8d05-c2da-4d91-9a1e-a361a9b8a3a3": {
+    "policyTriggered": true,
+    "policies": [
+      "Agent Transactions",
+      "Bulk Order"
+    ]
+  },
+  "766ecb96-8130-4ccb-b2da-2477166afa79": {
+    "id": "766ecb96-8130-4ccb-b2da-2477166afa79",
+    "accountId": "cb55b275-1c0c-4f70-9db1-9d15f373d7e8",
+    "sku": "APPLES",
+    "quantity": 11,
+    "totalPrice": 32.89,
+    "orderDate": "2025-04-06T22:20:37.445Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions",
+      "Bulk Order"
+    ],
+    "sellerOrderId": "603db04d-4f30-4a4c-8162-e403fc18ac7a"
+  },
+  "50fc0ce9-e02f-4292-bb8b-910699888ee8": {
+    "id": "50fc0ce9-e02f-4292-bb8b-910699888ee8",
+    "accountId": "cb55b275-1c0c-4f70-9db1-9d15f373d7e8",
+    "sku": "APPLES",
+    "quantity": 35,
+    "totalPrice": 104.65,
+    "orderDate": "2025-04-06T22:20:55.500Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "e3d34570-0e42-478d-967f-ad7ff6dd3732"
+  },
+  "0c006ea5-775a-4e10-b9bf-9c289df5646a": {
+    "id": "0c006ea5-775a-4e10-b9bf-9c289df5646a",
+    "accountId": "cb55b275-1c0c-4f70-9db1-9d15f373d7e8",
+    "sku": "APPLES",
+    "quantity": 35,
+    "totalPrice": 104.65,
+    "orderDate": "2025-04-06T22:21:04.024Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "c56ca87d-e316-4240-9444-994ad7202882"
+  },
+  "f54e99be-82de-4368-85e3-2f0d9122e514": {
+    "id": "f54e99be-82de-4368-85e3-2f0d9122e514",
+    "accountId": "cb55b275-1c0c-4f70-9db1-9d15f373d7e8",
+    "sku": "EGGS",
+    "quantity": 31,
+    "totalPrice": 101.99,
+    "orderDate": "2025-04-06T22:22:21.699Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions",
+      "Bulk Order",
+      "Low Balance Protection"
+    ],
+    "sellerOrderId": "94015a84-dc02-478a-94f2-4b3958477c8e"
+  },
+  "f4935e05-de1b-4f19-be35-8bc3033cf6b3": {
+    "id": "f4935e05-de1b-4f19-be35-8bc3033cf6b3",
+    "accountId": "4b82ccc9-37e3-41cc-9bb5-90a951e2ab1c",
+    "sku": "APPLES",
+    "quantity": 1,
+    "totalPrice": 2.99,
+    "orderDate": "2025-04-07T02:55:36.616Z",
+    "status": "pending_confirmation",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Low Balance Protection"
+    ]
+  },
+  "df4f54d3-586a-4276-865b-03255a004395": {
+    "id": "df4f54d3-586a-4276-865b-03255a004395",
+    "accountId": "4b82ccc9-37e3-41cc-9bb5-90a951e2ab1c",
+    "sku": "APPLES",
+    "quantity": 2,
+    "totalPrice": 5.98,
+    "orderDate": "2025-04-07T02:55:40.304Z",
+    "status": "pending_confirmation",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Agent Transactions",
+      "Low Balance Protection"
+    ]
   }
 }

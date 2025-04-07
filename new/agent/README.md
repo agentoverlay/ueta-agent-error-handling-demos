@@ -1,163 +1,72 @@
-# UETA Agent NextJS Dashboard
+# UETA Agent & Seller Dashboard
 
-This is a modern web dashboard for the UETA Agent system, built with NextJS. It provides a user-friendly interface for managing agent activities, creating purchase orders, reviewing transactions, and viewing audit logs.
-
-## Features
-
-- **Product List**: View all available products from the seller service
-- **Create Purchase Order**: Create new purchase orders and manage your account
-- **Review Dashboard**: Monitor pending orders, approve transactions, and start/stop the autonomous agent
-- **Transaction Logs**: View detailed audit logs of all agent activities
-- **Approval Policies**: Create and manage approval policies for orders
-
-## Architecture
-
-The application consists of two main parts:
-
-1. **NextJS Frontend**: A modern React-based web UI with four main components
-2. **Backend API Server**: An Express-based API that integrates with the existing UETA Agent system and provides MCP support
-
-## Prerequisites
-
-- Node.js (v18+)
-- npm or pnpm
-- Docker and Docker Compose (for containerized deployment)
-- Running UETA Agent services (seller and consumer)
+This application provides dual interfaces:
+1. **Agent Dashboard**: For purchasing agents to browse products, create orders, and manage approvals
+2. **Seller Dashboard**: For sellers to manage products, view orders, and configure approval policies
 
 ## Getting Started
 
-### 1. Local Development
+### Prerequisites
 
-#### Install Dependencies
+- Node.js 18+ 
+- npm or pnpm
 
-```bash
-cd new/agent
-pnpm install
-```
+### Running the Application
 
-#### Start the API Server
+The application consists of three main components that need to be running:
 
-```bash
-pnpm run agent-api
-```
+1. **Next.js Frontend**:
+   ```bash
+   npm run dev
+   ```
+   This will start the UI at http://localhost:3000
 
-This will start the API server on port 3001, which integrates with the UETA Agent system and provides both REST API endpoints and MCP support.
+2. **Agent API Server**:
+   ```bash
+   npm run agent-api
+   ```
+   This will start the agent API server at http://localhost:3001
 
-#### Start the NextJS Development Server
+3. **Seller API Server**:
+   ```bash
+   npm run seller-api
+   ```
+   This will start the seller service at http://localhost:4000
 
-```bash
-pnpm run dev
-```
+### User Interface
 
-This will start the NextJS development server on port 3000.
+The application provides a mode toggle in the top navigation to switch between Agent and Seller interfaces:
 
-### 2. Docker Deployment
+#### Agent Mode
+- **Dashboard**: View pending orders and approval requests
+- **Products**: Browse available products
+- **Create Purchase Order**: Place new orders
+- **Transaction Logs**: View order history
+- **Approval Policies**: Configure when orders need approval
+- **Wallet**: Manage account balance
 
-The application can be run using Docker Compose, which will set up the API server, frontend, and mock services for testing.
+#### Seller Mode
+- **Dashboard**: View order statistics and recent orders
+- **Orders**: Manage all orders (approve, reject, filter)
+- **Seller Policies**: Configure automated order processing rules
 
-```bash
-docker-compose up -d
-```
+## Implementation Details
 
-This will start:
-- API Server on port 3001
-- Frontend on port 3000
-- Mock Seller Service on port 4000
-- Mock Consumer Service on port 5002
-
-## Configuration
-
-The application uses environment variables for configuration. You can set these in the `.env.local` file for local development or through Docker Compose environment settings for deployment.
-
-### Key Environment Variables
-
-- `NEXT_PUBLIC_API_URL`: URL where the API server is running (default: http://localhost:3001)
-- `NEXT_PUBLIC_FRONTEND_URL`: URL where the frontend is running (default: http://localhost:3000)
-- `API_PORT`: Port for the API server (default: 3001)
-- `SELLER_URL`: URL for the seller service (default: http://localhost:4000)
-- `CONSUMER_URL`: URL for the consumer service (default: http://localhost:5002)
-
-## API Endpoints
-
-The agent API server provides the following endpoints:
-
-- **GET /api/health**: Health check endpoint
-- **GET /api/account**: Get account information
-- **POST /api/account**: Create a new account
-- **GET /api/products**: Get available products
-- **GET /api/orders/pending**: Get pending orders
-- **GET /api/logs**: Get transaction logs
-- **POST /api/order**: Place a new order
-- **POST /api/order/approve**: Approve a pending order
-- **POST /api/agent/start**: Start the autonomous agent
-- **POST /api/agent/stop**: Stop the autonomous agent
-- **GET /api/agent/status**: Get current agent status
-- **GET /api/stats**: Get overall transaction statistics
-
-## MCP Integration
-
-The agent API server also supports the Model Context Protocol (MCP), allowing for integration with AI assistants. It provides the following resources and tools:
-
-### Resources
-- `account://info`: Get account information
-- `products://list`: Get available products
-- `pending://orders`: Get pending orders
-- `agent://status`: Get agent status
-
-### Tools
-- `create-account`: Create a new account
-- `place-order`: Place a new order
-- `approve-order`: Approve a pending order
-- `start-autonomous-agent`: Start the autonomous agent
-- `stop-autonomous-agent`: Stop the autonomous agent
+- Frontend: Next.js with React and Tailwind CSS
+- Backend: Express.js API servers 
+- Storage: File-based JSON storage for simplicity
+- Communication: REST API between frontend and backends
 
 ## Development
 
-### Adding New Features
+To make changes to the application:
 
-To add new features to the dashboard:
-
-1. Create a new component in the `src/components` directory
-2. Import and integrate the component in the main page (`src/app/page.tsx`)
-3. Add any necessary API endpoints to the API server (`api/server.ts`)
-
-### Approval Policies
-
-The application includes a flag policy system that allows you to define rules for when orders require human approval. These policies can be based on various conditions:
-
-- **Order Total**: Require approval for orders over a certain amount
-- **Order Quantity**: Require approval for bulk orders
-- **Product SKU**: Require approval for specific products
-- **Wallet Balance**: Require approval when balance would fall below a threshold
-- **Time of Day**: Require approval for orders placed during certain hours
-
-Each policy can be enabled or disabled individually. When an order matches any enabled policy, it will be flagged for human approval in the dashboard.
-
-## Building for Production
-
-```bash
-pnpm run build
-```
-
-This will create an optimized production build of the NextJS application.
-
-## Troubleshooting
-
-### Account Creation
-You must create an account before being able to use the dashboard. When you first access the application, you'll be presented with a login screen where you can create an account.
-
-### API Connection Issues
-If you see errors connecting to the API:
-1. Verify that the API server is running (`pnpm run agent-api`)
-2. Check that the `NEXT_PUBLIC_API_URL` environment variable is set correctly
-3. Ensure there are no network issues between the frontend and API server
-
-### Docker Deployment
-If you encounter issues with Docker deployment:
-1. Ensure Docker and Docker Compose are installed and running
-2. Check container logs: `docker-compose logs -f api` or `docker-compose logs -f frontend`
-3. Verify that the environment variables in docker-compose.yml match your network configuration
+1. Agent-specific components are in `src/components/`
+2. Seller-specific components are in `src/components/seller/`
+3. API implementations are in `src/api/`
+4. The agent API server is in `src/api/server.ts`
+5. The seller API server is in `src/api/seller/seller.ts`
 
 ## License
 
-This project is provided as-is under the MIT License.
+This project is intended for demonstration purposes only.

@@ -36,6 +36,7 @@ This repository contains demos that illustrate several aspects of AI-assisted le
 
 * **Audit Tracing** — If `auditableLog` is set to true, both the producer and consumer maintain logs to mitigate liability.
 * **Progressive Confirmation** — When enabled (via config or random chance for agent orders), transactions are held pending approval.
+* **Flag Policies** — Define specific conditions that trigger the need for human approval, such as high-value orders or bulk purchases.
 * **Dashboards for Agents and Humans** — Agents can view their pending orders via a dedicated dashboard, while human operators can review and act on flagged transactions.
 
 ### Roadmap
@@ -161,7 +162,58 @@ http://localhost:5002/dashboard
 <img width="1785" alt="image" src="https://github.com/user-attachments/assets/80196682-4ab5-42f0-a1f9-49c00eedebd0" />
 
 
-### 4. Viewing Order Logs
+### 4. Using the New NextJS Agent Dashboard
+
+The new agent implementation provides a more modern, user-friendly dashboard built with NextJS. It includes a login screen, product listings, order creation, a dashboard for monitoring, and transaction logs.
+
+#### a. Run with Docker Compose
+
+The easiest way to run the new agent dashboard along with all required services is using Docker Compose:
+
+```bash
+# Ensure required files exist
+chmod +x ensure-files.sh
+./ensure-files.sh
+
+# Start all services
+docker-compose up -d
+```
+
+This will start:
+- The seller service on port 4000
+- The consumer service on port 5002
+- The original agent on port 7001
+- The original agent dashboard on port 6001
+- The new agent API service on port 3001
+- The new agent frontend on port 3000
+- Prometheus on port 9090
+- Grafana on port 3100
+
+#### b. Access the New Dashboard
+
+Open your browser and navigate to:
+```
+http://localhost:3000
+```
+
+You'll be presented with a login screen where you can create an account to get started.
+
+#### c. Run the New Agent Standalone
+
+Alternatively, you can run just the new agent implementation:
+
+```bash
+cd new/agent
+
+# Ensure required files exist
+chmod +x ensure-files.sh
+./ensure-files.sh
+
+# Start the new agent with its own Docker Compose
+docker-compose up -d
+```
+
+### 5. Viewing Order Logs
 
 Logs for both the business and agent sides are maintained (if enabled via `auditableLog`) to support audit tracing and error correction.
 
@@ -175,6 +227,12 @@ Logs for both the business and agent sides are maintained (if enabled via `audit
   The human service provides a dashboard for reviewing flagged orders and supports approving or reverting transactions.
 - **config.ts**  
   Contains configuration settings that control logging, progressive confirmation, and monitoring.
+- **new/agent/**  
+  Contains the new agent implementation built with NextJS. This provides a more modern web-based dashboard.
+  - **src/api/server.ts**: The API server handling account management, orders, and integration with the seller.
+  - **src/app/page.tsx**: The main page component for the NextJS frontend.
+  - **src/components/**: UI components for the dashboard, order form, product list, etc.
+  - **src/lib/**: Shared libraries and configuration.
 - **package.json**  
   Contains project scripts and dependencies.
 

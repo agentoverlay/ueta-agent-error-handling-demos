@@ -1,12 +1,25 @@
-// src/components/PolicyManagement.tsx
+// src/components/seller/SellerPolicies.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { env } from "../lib/env";
-import { FlagPolicy, PolicyOperator, PolicyTarget } from "../lib/policy-types";
+import { env } from "../../lib/env";
 
-export default function PolicyManagement() {
-  const [policies, setPolicies] = useState<FlagPolicy[]>([]);
+interface SellerPolicy {
+  id: string;
+  name: string;
+  description?: string;
+  type: "auto_approve" | "auto_reject" | "manual_review";
+  condition: {
+    field: "total_price" | "quantity" | "sku" | "account_id";
+    operator: ">" | "<" | "=" | "!=" | "contains";
+    value: string | number;
+  };
+  enabled: boolean;
+  createdAt: string;
+}
+
+export default function SellerPolicies() {
+  const [policies, setPolicies] = useState<SellerPolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -21,26 +34,30 @@ export default function PolicyManagement() {
   const [formState, setFormState] = useState<{
     name: string;
     description: string;
-    target: PolicyTarget;
-    operator: PolicyOperator;
-    value: string;
+    type: "auto_approve" | "auto_reject" | "manual_review";
+    condition: {
+      field: "total_price" | "quantity" | "sku" | "account_id";
+      operator: ">" | "<" | "=" | "!=" | "contains";
+      value: string | number;
+    };
     enabled: boolean;
-    policyType: 'agent' | 'seller' | undefined;
   }>({
     name: "",
     description: "",
-    target: PolicyTarget.ORDER_TOTAL,
-    operator: PolicyOperator.GREATER_THAN,
-    value: "",
+    type: "manual_review",
+    condition: {
+      field: "total_price",
+      operator: ">",
+      value: ""
+    },
     enabled: true,
-    policyType: 'agent',
   });
 
   // Fetch policies
   const fetchPolicies = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/policies`);
+      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/seller/policies`);
 
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
@@ -52,7 +69,7 @@ export default function PolicyManagement() {
     } catch (err) {
       console.error("Error fetching policies:", err);
       setError(
-        "Failed to fetch policies. Please ensure the agent server is running.",
+        "Failed to fetch policies. Please ensure the seller server is running."
       );
     } finally {
       setLoading(false);
@@ -69,65 +86,71 @@ export default function PolicyManagement() {
     setFormState({
       name: "",
       description: "",
-      target: PolicyTarget.ORDER_TOTAL,
-      operator: PolicyOperator.GREATER_THAN,
-      value: "",
+      type: "manual_review",
+      condition: {
+        field: "total_price",
+        operator: ">",
+        value: ""
+      },
       enabled: true,
-      policyType: 'agent',
     });
   };
 
-  // Format policy target for display
-  const formatTarget = (target: PolicyTarget): string => {
-    switch (target) {
-      case PolicyTarget.ORDER_TOTAL:
-        return "Order Total";
-      case PolicyTarget.ORDER_QUANTITY:
-        return "Order Quantity";
-      case PolicyTarget.PRODUCT_SKU:
+  // Format policy field for display
+  const formatField = (field: string): string => {
+    switch (field) {
+      case "total_price":
+        return "Total Price";
+      case "quantity":
+        return "Quantity";
+      case "sku":
         return "Product SKU";
-      case PolicyTarget.WALLET_BALANCE:
-        return "Wallet Balance";
-      case PolicyTarget.TIME_OF_DAY:
-        return "Time of Day";
-      case PolicyTarget.AGENT_TRANSACTION:
-        return "Agent Transaction";
+      case "account_id":
+        return "Account ID";
       default:
-        return target;
+        return field;
+    }
+  };
+
+  // Format policy type for display
+  const formatType = (type: string): string => {
+    switch (type) {
+      case "auto_approve":
+        return "Auto Approve";
+      case "auto_reject":
+        return "Auto Reject";
+      case "manual_review":
+        return "Manual Review";
+      default:
+        return type;
     }
   };
 
   // Format policy value for display
   const formatValue = (
     value: string | number,
-    target: PolicyTarget,
+    field: string,
   ): string => {
-    switch (target) {
-      case PolicyTarget.ORDER_TOTAL:
-      case PolicyTarget.WALLET_BALANCE:
-        return `$${value}`;
-      case PolicyTarget.TIME_OF_DAY:
-        const numValue = Number(value);
-        const hours = Math.floor(numValue / 100);
-        const minutes = numValue % 100;
-        return `${hours}:${minutes.toString().padStart(2, "0")}`;
-      default:
-        return String(value);
+    if (field === "total_price") {
+      return `$${value}`;
     }
+    return String(value);
   };
 
   // Handle edit policy
-  const handleEditPolicy = (policy: FlagPolicy) => {
+  const handleEditPolicy = (policy: SellerPolicy) => {
     setIsEditing(policy.id);
     setIsCreating(false);
     setFormState({
       name: policy.name,
       description: policy.description || "",
-      target: policy.target,
-      operator: policy.operator,
-      value: String(policy.value),
+      type: policy.type,
+      condition: {
+        field: policy.condition.field,
+        operator: policy.condition.operator,
+        value: policy.condition.value
+      },
       enabled: policy.enabled,
-      policyType: policy.policyType || 'agent',
     });
   };
 
@@ -145,38 +168,39 @@ export default function PolicyManagement() {
         return;
       }
 
-      if (!formState.value.trim()) {
-        setMessage({ type: "error", text: "Policy value is required" });
+      if (formState.condition.value === "") {
+        setMessage({ type: "error", text: "Condition value is required" });
         setActionLoading(false);
         return;
       }
 
-      // Process value based on target
-      let processedValue: string | number = formState.value;
+      // Process value based on field
+      let processedValue: string | number = formState.condition.value;
 
       // For numeric fields, convert to number
       if (
-        formState.target === PolicyTarget.ORDER_TOTAL ||
-        formState.target === PolicyTarget.ORDER_QUANTITY ||
-        formState.target === PolicyTarget.WALLET_BALANCE ||
-        formState.target === PolicyTarget.TIME_OF_DAY
+        formState.condition.field === "total_price" ||
+        formState.condition.field === "quantity"
       ) {
-        if (isNaN(Number(processedValue))) {
+        const numValue = Number(processedValue);
+        if (isNaN(numValue)) {
           setMessage({ type: "error", text: "Please enter a valid number" });
           setActionLoading(false);
           return;
         }
-        processedValue = Number(processedValue);
+        processedValue = numValue;
       }
 
       const payload = {
         name: formState.name,
         description: formState.description,
-        target: formState.target,
-        operator: formState.operator,
-        value: processedValue,
+        type: formState.type,
+        condition: {
+          field: formState.condition.field,
+          operator: formState.condition.operator,
+          value: processedValue
+        },
         enabled: formState.enabled,
-        policyType: formState.policyType,
       };
 
       let response;
@@ -184,7 +208,7 @@ export default function PolicyManagement() {
       if (isEditing) {
         // Update existing policy
         response = await fetch(
-          `${env.NEXT_PUBLIC_API_URL}/api/policies/${isEditing}`,
+          `${env.NEXT_PUBLIC_API_URL}/api/seller/policies/${isEditing}`,
           {
             method: "PUT",
             headers: {
@@ -195,7 +219,7 @@ export default function PolicyManagement() {
         );
       } else {
         // Create new policy
-        response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/policies`, {
+        response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/seller/policies`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -247,7 +271,7 @@ export default function PolicyManagement() {
 
     try {
       const response = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/policies/${id}`,
+        `${env.NEXT_PUBLIC_API_URL}/api/seller/policies/${id}`,
         {
           method: "DELETE",
         },
@@ -280,13 +304,13 @@ export default function PolicyManagement() {
   };
 
   // Handle toggle policy enabled state
-  const handleToggleEnabled = async (policy: FlagPolicy) => {
+  const handleToggleEnabled = async (policy: SellerPolicy) => {
     setActionLoading(true);
     setMessage(null);
 
     try {
       const response = await fetch(
-        `${env.NEXT_PUBLIC_API_URL}/api/policies/${policy.id}`,
+        `${env.NEXT_PUBLIC_API_URL}/api/seller/policies/${policy.id}`,
         {
           method: "PUT",
           headers: {
@@ -329,20 +353,22 @@ export default function PolicyManagement() {
   ) => {
     const { name, value } = e.target;
     
-    // Set default value for AGENT_TRANSACTION when the target is changed
-    if (name === 'target' && value === 'agentTransaction') {
-      setFormState(prev => ({
+    // Handle nested condition fields
+    if (name.startsWith("condition.")) {
+      const conditionField = name.split(".")[1];
+      setFormState((prev) => ({
         ...prev,
-        target: value as PolicyTarget,
-        value: 'true'
+        condition: {
+          ...prev.condition,
+          [conditionField]: value
+        }
       }));
-      return;
+    } else {
+      setFormState((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
-    
-    setFormState((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
   };
 
   // Handle checkbox change
@@ -376,10 +402,9 @@ export default function PolicyManagement() {
     <div className="bg-white text-black rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-2xl font-bold">Approval Policies</h2>
+          <h2 className="text-2xl font-bold">Seller Policies</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Define rules that will automatically flag orders for approval.
-            <strong className="ml-2">Agent policies</strong> apply to this agent's transactions, while <strong>seller policies</strong> apply to all transactions including from other services.
+            Define automated rules for handling orders from purchasing agents.
           </p>
         </div>
         {!isCreating && !isEditing && (
@@ -418,27 +443,6 @@ export default function PolicyManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label
-                  htmlFor="policyType"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Policy Scope
-                </label>
-                <select
-                  id="policyType"
-                  name="policyType"
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  value={formState.policyType || 'agent'}
-                  onChange={handleInputChange}
-                >
-                  <option value="agent">Agent Policy</option>
-                  <option value="seller">Seller Policy</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
@@ -473,99 +477,102 @@ export default function PolicyManagement() {
               </div>
             </div>
 
+            <div className="mb-4">
+              <label
+                htmlFor="type"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Policy Type *
+              </label>
+              <select
+                id="type"
+                name="type"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                value={formState.type}
+                onChange={handleInputChange}
+              >
+                <option value="manual_review">Manual Review</option>
+                <option value="auto_approve">Auto Approve</option>
+                <option value="auto_reject">Auto Reject</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                {formState.type === "manual_review" 
+                  ? "Orders matching this policy will require manual review by a seller" 
+                  : formState.type === "auto_approve" 
+                  ? "Orders matching this policy will be automatically approved" 
+                  : "Orders matching this policy will be automatically rejected"}
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <label
-                  htmlFor="target"
+                  htmlFor="condition.field"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Target *
+                  Condition Field *
                 </label>
                 <select
-                  id="target"
-                  name="target"
+                  id="condition.field"
+                  name="condition.field"
                   className="w-full p-2 border border-gray-300 rounded-md"
-                  value={formState.target}
+                  value={formState.condition.field}
                   onChange={handleInputChange}
                 >
-                  {Object.values(PolicyTarget)
-                    .filter(target => {
-                      // For agent policies, show all targets
-                      // For seller policies, show only ORDER_TOTAL, ORDER_QUANTITY, PRODUCT_SKU
-                      if (formState.policyType === 'seller') {
-                        return target === PolicyTarget.ORDER_TOTAL || 
-                               target === PolicyTarget.ORDER_QUANTITY || 
-                               target === PolicyTarget.PRODUCT_SKU;
-                      } else {
-                        return true;
-                      }
-                    })
-                    .map((target) => (
-                      <option key={target} value={target}>
-                        {formatTarget(target)}
-                      </option>
-                    ))
-                  }
+                  <option value="total_price">Total Price</option>
+                  <option value="quantity">Quantity</option>
+                  <option value="sku">Product SKU</option>
+                  <option value="account_id">Account ID</option>
                 </select>
               </div>
 
               <div>
                 <label
-                  htmlFor="operator"
+                  htmlFor="condition.operator"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Operator *
                 </label>
                 <select
-                  id="operator"
-                  name="operator"
+                  id="condition.operator"
+                  name="condition.operator"
                   className="w-full p-2 border border-gray-300 rounded-md"
-                  value={formState.operator}
+                  value={formState.condition.operator}
                   onChange={handleInputChange}
                 >
-                  {Object.values(PolicyOperator).map((operator) => (
-                    <option key={operator} value={operator}>
-                      {operator}
-                    </option>
-                  ))}
+                  <option value=">">Greater Than (&gt;)</option>
+                  <option value="<">Less Than (&lt;)</option>
+                  <option value="=">Equal To (=)</option>
+                  <option value="!=">Not Equal To (!=)</option>
+                  {(formState.condition.field === "sku" || formState.condition.field === "account_id") && (
+                    <option value="contains">Contains</option>
+                  )}
                 </select>
               </div>
 
               <div>
                 <label
-                  htmlFor="value"
+                  htmlFor="condition.value"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
                   Value *
                 </label>
                 <input
                   type={
-                    formState.target === PolicyTarget.PRODUCT_SKU || 
-                    formState.target === PolicyTarget.AGENT_TRANSACTION
-                      ? "text"
-                      : "number"
+                    formState.condition.field === "total_price" || formState.condition.field === "quantity"
+                      ? "number"
+                      : "text"
                   }
-                  id="value"
-                  name="value"
+                  id="condition.value"
+                  name="condition.value"
                   className="w-full p-2 border border-gray-300 rounded-md"
-                  value={formState.value}
+                  value={formState.condition.value}
                   onChange={handleInputChange}
                   required
                 />
-                {(formState.target === PolicyTarget.ORDER_TOTAL ||
-                  formState.target === PolicyTarget.WALLET_BALANCE) && (
+                {formState.condition.field === "total_price" && (
                   <span className="text-xs text-gray-500">
-                    Enter dollar amount (e.g., 1000 for $1000)
-                  </span>
-                )}
-                {formState.target === PolicyTarget.TIME_OF_DAY && (
-                  <span className="text-xs text-gray-500">
-                    Enter in 24hr format without colon (e.g., 1430 for 2:30pm)
-                  </span>
-                )}
-                {formState.target === PolicyTarget.AGENT_TRANSACTION && (
-                  <span className="text-xs text-gray-500">
-                    Enter 'true' to trigger policy for agent transactions
+                    Enter dollar amount (e.g., 100 for $100)
                   </span>
                 )}
               </div>
@@ -615,7 +622,7 @@ export default function PolicyManagement() {
       {!policies.length ? (
         <div className="text-center p-4 bg-gray-50 rounded">
           <p className="text-gray-500">
-            No approval policies found. Create your first policy to get started.
+            No seller policies found. Create your first policy to get started.
           </p>
         </div>
       ) : (
@@ -627,7 +634,7 @@ export default function PolicyManagement() {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
+                  Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Condition
@@ -643,20 +650,27 @@ export default function PolicyManagement() {
             <tbody className="bg-white divide-y divide-gray-200">
               {policies.map((policy) => (
                 <tr key={policy.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {policy.name}
-                    {policy.policyType && (
-                      <span className={`ml-2 px-2 py-1 text-xs leading-none rounded-full ${policy.policyType === 'agent' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
-                        {policy.policyType === 'agent' ? 'Agent' : 'Seller'}
-                      </span>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {policy.name}
+                    </div>
+                    {policy.description && (
+                      <div className="text-xs text-gray-500">
+                        {policy.description}
+                      </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {policy.description || "-"}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                      ${policy.type === 'auto_approve' ? 'bg-green-100 text-green-800' : 
+                        policy.type === 'auto_reject' ? 'bg-red-100 text-red-800' : 
+                        'bg-yellow-100 text-yellow-800'}`}>
+                      {formatType(policy.type)}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatTarget(policy.target)} {policy.operator}{" "}
-                    {formatValue(policy.value, policy.target)}
+                    {formatField(policy.condition.field)} {policy.condition.operator}{" "}
+                    {formatValue(policy.condition.value, policy.condition.field)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

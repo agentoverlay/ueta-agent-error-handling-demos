@@ -8,7 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "agent-api": "npx tsx src/api/server.ts"
+    "agent-api": "npx tsx src/api/server.ts",
+    "seller-api": "npx tsx src/api/seller/seller.ts",
+    "minimal-seller": "npx tsx src/api/seller/minimal-seller.ts",
+    "test-server": "npx tsx src/api/seller/test-server.ts",
+    "validate-paths": "npx tsx src/api/seller/validate-paths.ts",
+    "debug-seller": "npx tsx debug-seller-api.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -7,7 +7,19 @@
     "operator": ">",
     "value": 1000,
     "enabled": true,
-    "createdAt": "2025-04-05T00:00:00.000Z"
+    "createdAt": "2025-04-05T00:00:00.000Z",
+    "policyType": "agent"
+  },
+  {
+    "id": "policy-agent-1",
+    "name": "Agent Transactions",
+    "description": "Identify and flag orders placed through the agent interface",
+    "target": "agentTransaction",
+    "operator": "=",
+    "value": "true",
+    "enabled": true,
+    "createdAt": "2025-04-06T00:00:00.000Z",
+    "policyType": "agent"
   },
   {
     "id": "policy-2",
@@ -32,6 +44,7 @@
     "operator": "<",
     "value": 100,
     "enabled": true,
-    "createdAt": "2025-04-05T00:00:00.000Z"
+    "createdAt": "2025-04-05T00:00:00.000Z",
+    "policyType": "agent"
   }
 ]

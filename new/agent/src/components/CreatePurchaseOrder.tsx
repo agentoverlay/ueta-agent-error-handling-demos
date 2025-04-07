@@ -27,14 +27,17 @@ export default function CreatePurchaseOrder({
 }: CreatePurchaseOrderProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedSku, setSelectedSku] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
   const [isAgentMode, setIsAgentMode] = useState(false);
+  const [simulateError, setSimulateError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
     type: "success" | "error" | "";
   } | null>(null);
-  const [policyEvaluations, setPolicyEvaluations] = useState<PolicyEvaluation[]>([]);
+  const [policyEvaluations, setPolicyEvaluations] = useState<
+    PolicyEvaluation[]
+  >([]);
   const [requiresApproval, setRequiresApproval] = useState(false);
 
   // Fetch products on component mount
@@ -75,28 +78,34 @@ export default function CreatePurchaseOrder({
 
   // Check if the order would trigger any policies
   const checkPolicies = async () => {
-    if (!currentAccount || !selectedSku || quantity <= 0) return;
+    if (!currentAccount || !selectedSku || quantity < 0) return;
 
     try {
       const walletAfterOrder = currentAccount.wallet - totalCost;
-      
-      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/policies/check`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+
+      const response = await fetch(
+        `${env.NEXT_PUBLIC_API_URL}/api/policies/check`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sku: selectedSku,
+            quantity,
+            totalPrice: totalCost,
+            walletBalance: walletAfterOrder,
+            isAgentTransaction: isAgentMode,
+          }),
         },
-        body: JSON.stringify({
-          sku: selectedSku,
-          quantity,
-          totalPrice: totalCost,
-          walletBalance: walletAfterOrder
-        }),
-      });
+      );
 
       if (response.ok) {
         const data = await response.json();
         setRequiresApproval(data.requiresApproval);
-        setPolicyEvaluations(data.evaluations.filter((e: PolicyEvaluation) => e.triggered));
+        setPolicyEvaluations(
+          data.evaluations.filter((e: PolicyEvaluation) => e.triggered),
+        );
       }
     } catch (error) {
       console.error("Error checking policies:", error);
@@ -106,13 +115,13 @@ export default function CreatePurchaseOrder({
   // Check policies when relevant inputs change
   useEffect(() => {
     checkPolicies();
-  }, [selectedSku, quantity, currentAccount, totalCost]);
+  }, [selectedSku, quantity, currentAccount?.wallet, totalCost]);
 
   // Handle form submission to place an order
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedSku || quantity <= 0) {
+    if (!selectedSku || quantity < 0) {
       setMessage({
         text: "Please select a product and enter a valid quantity.",
         type: "error",
@@ -151,26 +160,31 @@ export default function CreatePurchaseOrder({
           sku: selectedSku,
           quantity,
           agentMode: isAgentMode,
+          simulateError: simulateError
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        console.log('Order response:', data);
         // Update the account balance
         if (data.walletBalance !== undefined) {
+          console.log(`Updating wallet balance from ${currentAccount.wallet} to ${data.walletBalance}`);
           onAccountUpdated({
             ...currentAccount,
             wallet: data.walletBalance,
           });
+        } else {
+          console.warn('No wallet balance in response');
         }
 
         // Check if order requires approval
         const orderRequiresApproval = data.requiresApproval || false;
-        
+
         let successMessage = "Order placed successfully!";
         if (orderRequiresApproval) {
-          successMessage += " This order requires human approval before processing.";
+          successMessage += " This order requires your approval before being sent to the seller. Please go to the Review Dashboard to approve it.";
         }
 
         setMessage({
@@ -179,8 +193,9 @@ export default function CreatePurchaseOrder({
         });
 
         // Reset form
-        setQuantity(1);
+        setQuantity(0);
         setIsAgentMode(false);
+        setSimulateError(false);
         setPolicyEvaluations([]);
         setRequiresApproval(false);
       } else {
@@ -253,10 +268,10 @@ export default function CreatePurchaseOrder({
           <input
             id="quantity"
             type="number"
-            min="1"
+            min="0"
             className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            onChange={(e) => setQuantity(parseInt(e.target.value))}
             disabled={loading}
           />
         </div>
@@ -271,7 +286,22 @@ export default function CreatePurchaseOrder({
               disabled={loading}
             />
             <span className="ml-2 text-sm text-gray-700">
-              Place order as agent (will require approval in 1/10 cases, regardless of policies)
+              Place order as agent
+            </span>
+          </label>
+        </div>
+        
+        <div className="mb-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+              checked={simulateError}
+              onChange={(e) => setSimulateError(e.target.checked)}
+              disabled={loading}
+            />
+            <span className="ml-2 text-sm text-gray-700">
+              Simulate error (multiply quantity by 10)
             </span>
           </label>
         </div>
@@ -280,7 +310,7 @@ export default function CreatePurchaseOrder({
         {requiresApproval && policyEvaluations.length > 0 && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
             <p className="font-medium text-amber-800 mb-2">
-              ⚠️ This order will require human approval
+              ⚠️ This order will require your approval before being sent to the seller
             </p>
             <div className="text-sm text-amber-700">
               <p>The following policies were triggered:</p>

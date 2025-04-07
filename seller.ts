@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { v4 as uuid } from "uuid";
 import fs from "fs";
+import path from "path";
 import fetch from "node-fetch";
 import { config } from "./config";
 import * as metrics from "./metrics/seller_metrics";
@@ -36,14 +37,23 @@ const CONSUMER_SERVICE_URL = process.env.CONSUMER_URL || `http://consumer:${CONS
 
 console.log(`Consumer service URL set to: ${CONSUMER_SERVICE_URL}`);
 
-const products: Product[] = [
-    { sku: "APPLES", description: "Fresh Red Apples (1 lb)", price: 2.99 },
-    { sku: "BANANAS", description: "Organic Bananas (bunch)", price: 1.49 },
-    { sku: "MILK", description: "Whole Milk (1 gallon)", price: 3.75 },
-    { sku: "BREAD", description: "Whole Wheat Bread", price: 2.25 },
-    { sku: "EGGS", description: "Large Eggs (dozen)", price: 3.99 },
-    { sku: "CHEESE", description: "Cheddar Cheese Block (8 oz)", price: 4.50 }
-];
+// Load products from JSON file
+let products: Product[] = [];
+try {
+    const productsFilePath = path.join(__dirname, "products.json");
+    const productsData = fs.readFileSync(productsFilePath, 'utf8');
+    products = JSON.parse(productsData);
+    console.log(`Loaded ${products.length} products from products.json`);
+} catch (error) {
+    console.error(`Error loading products from JSON file: ${error}`);
+    // Fallback to default products if file can't be loaded
+    products = [
+        { sku: "APPLES", description: "Fresh Red Apples (1 lb)", price: 2.99 },
+        { sku: "BANANAS", description: "Organic Bananas (bunch)", price: 1.49 },
+        { sku: "MILK", description: "Whole Milk (1 gallon)", price: 3.75 }
+    ];
+    console.log("Using fallback product list");
+}
 
 const orders: Order[] = [];
 
@@ -123,7 +133,7 @@ app.post("/approve", (req, res) => {
 // --- Order Endpoint ---
 app.post("/order", async (req, res) => {
     const startTime = process.hrtime();
-    const { accountId, sku, quantity, agent } = req.body;
+    const { accountId, sku, quantity, agent, forceError, forceApproval } = req.body;
     if (!accountId || !sku || typeof quantity !== "number" || quantity <= 0) {
         return res.status(400).json({ error: "Invalid payload" });
     }
@@ -145,8 +155,8 @@ app.post("/order", async (req, res) => {
     // Record order value
     metrics.orderValueSummary.observe(totalPrice);
 
-    // Simulate error ~10% of the time if withError is active.
-    if (withError && Math.random() < 0.1) {
+    // Check for force error flag
+    if (forceError || (withError && Math.random() < 0.1)) {
         order.error = "Simulated error in order processing";
         order.status = "error";
         orders.push(order);
@@ -176,73 +186,37 @@ app.post("/order", async (req, res) => {
         return res.status(201).json(order);
     }
 
-    // Determine approval requirement.
-    if (agent === true) {
-        // For agent orders, use progressive confirmation if enabled or 1/10 probability.
-        if (config.progressiveConfirmation || Math.random() < 0.1) {
-            order.status = "pending_confirmation";
-            orders.push(order);
-            
-            // Update pending metric
-            metrics.orderCounter.inc({ status: "pending_confirmation" });
-            metrics.pendingOrdersGauge.inc();
-            
-            auditLog(`Agent order pending approval: ${JSON.stringify(order)}`);
-            try {
-                await fetch(`${CONSUMER_SERVICE_URL}/flag`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(order),
-                });
-                auditLog(
-                    `Notified consumer service of pending agent order ${order.id}`,
-                );
-            } catch (err) {
-                auditLog(
-                    `Failed to notify consumer service for agent order ${order.id}: ${err}`,
-                );
-            }
-        } else {
-            order.status = "delivered";
-            orders.push(order);
-            
-            // Update delivered metric
-            metrics.orderCounter.inc({ status: "delivered" });
-            
-            auditLog(`Agent order delivered: ${JSON.stringify(order)}`);
+    // Check for force approval flag or determine if approval is needed
+    if (forceApproval || (agent === true && (config.progressiveConfirmation || Math.random() < 0.1))) {
+        order.status = "pending_confirmation";
+        orders.push(order);
+        
+        // Update pending metric
+        metrics.orderCounter.inc({ status: "pending_confirmation" });
+        metrics.pendingOrdersGauge.inc();
+        
+        auditLog(`Order pending approval: ${JSON.stringify(order)}`);
+        try {
+            await fetch(`${CONSUMER_SERVICE_URL}/flag`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(order),
+            });
+            auditLog(`Notified consumer service of pending order ${order.id}`);
+        } catch (err) {
+            auditLog(
+                `Failed to notify consumer service for order ${order.id}: ${err}`,
+            );
         }
     } else {
-        // For normal orders.
-        if (config.progressiveConfirmation) {
-            order.status = "pending_confirmation";
-            orders.push(order);
-            
-            // Update pending metric
-            metrics.orderCounter.inc({ status: "pending_confirmation" });
-            metrics.pendingOrdersGauge.inc();
-            
-            auditLog(`Order pending approval: ${JSON.stringify(order)}`);
-            try {
-                await fetch(`${CONSUMER_SERVICE_URL}/flag`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(order),
-                });
-                auditLog(`Notified consumer service of pending order ${order.id}`);
-            } catch (err) {
-                auditLog(
-                    `Failed to notify consumer service for order ${order.id}: ${err}`,
-                );
-            }
-        } else {
-            order.status = "delivered";
-            orders.push(order);
-            
-            // Update delivered metric
-            metrics.orderCounter.inc({ status: "delivered" });
-            
-            auditLog(`Order delivered: ${JSON.stringify(order)}`);
-        }
+        // No error and no approval needed, deliver immediately
+        order.status = "delivered";
+        orders.push(order);
+        
+        // Update delivered metric
+        metrics.orderCounter.inc({ status: "delivered" });
+        
+        auditLog(`Order delivered: ${JSON.stringify(order)}`);
     }
 
     // Record processing duration

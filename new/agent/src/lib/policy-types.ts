@@ -13,6 +13,7 @@ export enum PolicyTarget {
   PRODUCT_SKU = 'productSku',
   WALLET_BALANCE = 'walletBalance',
   TIME_OF_DAY = 'timeOfDay',
+  AGENT_TRANSACTION = 'agentTransaction',
 }
 
 export interface FlagPolicy {
@@ -24,6 +25,7 @@ export interface FlagPolicy {
   value: number | string;
   enabled: boolean;
   createdAt: string;
+  policyType?: 'agent' | 'seller';
 }
 
 export interface PolicyEvaluation {

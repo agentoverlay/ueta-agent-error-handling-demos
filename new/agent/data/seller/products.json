@@ -1,0 +1,32 @@
+[
+  {
+    "sku": "APPLES",
+    "description": "Fresh Red Apples (1 lb)",
+    "price": 2.99
+  },
+  {
+    "sku": "BANANAS",
+    "description": "Organic Bananas (bunch)",
+    "price": 1.49
+  },
+  {
+    "sku": "MILK",
+    "description": "Whole Milk (1 gallon)",
+    "price": 3.75
+  },
+  {
+    "sku": "BREAD",
+    "description": "Artisan Sourdough Bread",
+    "price": 4.99
+  },
+  {
+    "sku": "EGGS",
+    "description": "Free-Range Eggs (dozen)",
+    "price": 3.29
+  },
+  {
+    "sku": "COFFEE",
+    "description": "Premium Coffee Beans (12 oz)",
+    "price": 8.99
+  }
+]

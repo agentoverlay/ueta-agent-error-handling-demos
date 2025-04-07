@@ -1,0 +1,28 @@
+[
+  {
+    "id": "policy-1",
+    "name": "High Value Order Review",
+    "description": "Orders over $100 require manual review",
+    "type": "manual_review",
+    "condition": {
+      "field": "total_price",
+      "operator": ">",
+      "value": 100
+    },
+    "enabled": true,
+    "createdAt": "2025-04-06T04:06:02.808Z"
+  },
+  {
+    "id": "policy-2",
+    "name": "Bulk Apple Auto-Approve",
+    "description": "Auto-approve all apple orders under 10 units",
+    "type": "auto_approve",
+    "condition": {
+      "field": "sku",
+      "operator": "=",
+      "value": "APPLES"
+    },
+    "enabled": true,
+    "createdAt": "2025-04-06T04:06:02.808Z"
+  }
+]

@@ -13,7 +13,7 @@ interface Order {
   orderDate: string;
   status: string;
   policyTriggered?: boolean; // Flag to indicate if this order was flagged by our policies
-  error?: string;
+  source?: 'agent' | 'seller'; // Where the pending order is (local or at seller)
 }
 
 interface Stats {
@@ -206,7 +206,7 @@ export default function ReviewDashboard() {
   }
 
   const totalPendingAmount = pendingOrders.reduce(
-    (sum, order) => sum + order.totalPrice,
+    (sum, order) => sum + (order.totalPrice || 0),
     0,
   );
 
@@ -271,7 +271,7 @@ export default function ReviewDashboard() {
             <div>
               <p className="text-sm text-black">Total Amount Paid</p>
               <p className="text-xl font-bold">
-                ${stats.totalAmountPaid.toFixed(2)}
+              ${stats.totalAmountPaid ? stats.totalAmountPaid.toFixed(2) : '0.00'}
               </p>
             </div>
           </div>
@@ -305,6 +305,9 @@ export default function ReviewDashboard() {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                  Source
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -327,6 +330,11 @@ export default function ReviewDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                       {order.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${order.source === 'agent' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
+                      {order.source === 'agent' ? 'Agent' : 'Seller'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
