@@ -1,0 +1,2 @@
+Create a payment link for an existing product called "Test" with id of prod_S5Pw7TWdcx7MkY a price of $100.
+

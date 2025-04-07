@@ -1,0 +1,6 @@
+openai-agents
+stripe-agent-toolkit
+streamlit
+qrcode
+pillow
+watchdog
