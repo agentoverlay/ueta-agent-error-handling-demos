@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import fetch from "node-fetch";
+import register, { metrics } from "./metrics";
 
 // ES Module equivalent for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -175,16 +176,26 @@ function saveProducts(products: Product[]): void {
     fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
 }
 
-// Calculate seller statistics
+// Calculate seller statistics and update metrics
 function calculateStats() {
     const orders = loadOrders();
     const deliveredOrders = orders.filter(o => o.status === "delivered");
+    const pendingOrders = orders.filter(o => o.status === "pending_confirmation");
+    const errorOrders = orders.filter(o => o.status === "error");
+    
+    // Update metrics
+    metrics.pending_orders.set(pendingOrders.length);
+    metrics.pending_approvals.set(pendingOrders.length);
+    
+    // Calculate total pending value
+    const pendingValue = pendingOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+    metrics.order_value_pending.set(pendingValue);
     
     return {
         totalOrders: deliveredOrders.length,
         totalRevenue: deliveredOrders.reduce((sum, order) => sum + order.totalPrice, 0),
-        pendingOrders: orders.filter(o => o.status === "pending_confirmation").length,
-        errorOrders: orders.filter(o => o.status === "error").length
+        pendingOrders: pendingOrders.length,
+        errorOrders: errorOrders.length
     };
 }
 
@@ -275,6 +286,16 @@ function evaluateCondition(
 // Health check
 app.get("/health", (req, res) => {
     res.json({ status: "ok", service: "seller" });
+});
+
+// Metrics endpoint for Prometheus
+app.get("/metrics", async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (err) {
+        res.status(500).end(err);
+    }
 });
 
 // List all products
@@ -403,6 +424,21 @@ app.post("/order", (req, res) => {
     orders.push(order);
     saveOrders(orders);
     
+    // Update metrics
+    metrics.orders_total.inc({ status: order.status });
+    metrics.order_value_total.inc(order.totalPrice);
+    
+    // For pending orders
+    if (order.status === "pending_confirmation") {
+        metrics.pending_orders.inc();
+        metrics.pending_approvals.inc();
+        metrics.order_value_pending.inc(order.totalPrice);
+    }
+    
+    // Track processing time (this is a simple example - actual time would be measured from start to end)
+    const end = process.hrtime();
+    metrics.order_processing_duration.observe(0.1); // Placeholder value
+    
     auditLog(`New order placed: ${JSON.stringify(order)}, policy result: ${JSON.stringify(policyEvaluation)}`);
     res.status(201).json(order);
 });
@@ -453,8 +489,18 @@ app.post("/approve", (req, res) => {
         return res.status(400).json({ error: "Only orders pending approval can be approved" });
     }
     
+    // Get the order for metrics before updating
+    const oldOrder = {...orders[orderIndex]};
+    
     orders[orderIndex].status = "delivered";
     saveOrders(orders);
+    
+    // Update metrics
+    metrics.approvals_total.inc();
+    metrics.pending_orders.dec();
+    metrics.pending_approvals.dec();
+    metrics.order_value_pending.dec(oldOrder.totalPrice);
+    metrics.orders_total.inc({ status: "delivered" });
     
     auditLog(`Order approved: ${JSON.stringify(orders[orderIndex])}`);
     res.json({ message: "Order approved", order: orders[orderIndex] });
@@ -479,8 +525,22 @@ app.post("/reject", (req, res) => {
         return res.status(400).json({ error: "Only pending or error orders can be rejected/reverted" });
     }
     
+    // Get the order for metrics before updating
+    const oldOrder = {...orders[orderIndex]};
+    
     orders[orderIndex].status = "reverted";
     saveOrders(orders);
+    
+    // Update metrics
+    metrics.rejections_total.inc();
+    metrics.orders_total.inc({ status: "reverted" });
+    
+    // If was pending, update pending metrics
+    if (oldOrder.status === "pending_confirmation") {
+        metrics.pending_orders.dec();
+        metrics.pending_approvals.dec();
+        metrics.order_value_pending.dec(oldOrder.totalPrice);
+    }
     
     auditLog(`Order rejected/reverted: ${JSON.stringify(orders[orderIndex])}`);
     res.json({ message: "Order rejected", order: orders[orderIndex] });

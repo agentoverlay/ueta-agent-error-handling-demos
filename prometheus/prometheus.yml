@@ -6,23 +6,16 @@ scrape_configs:
   - job_name: 'seller'
     scrape_interval: 5s
     static_configs:
-      - targets: ['seller:4000']
+      - targets: ['seller-api:4000']
         labels:
           service: 'seller'
-
-  - job_name: 'consumer'
-    scrape_interval: 5s
-    static_configs:
-      - targets: ['consumer:5002']
-        labels:
-          service: 'consumer'
 
   - job_name: 'agent'
     scrape_interval: 5s
     static_configs:
-      - targets: ['agent:7001']
+      - targets: ['agent-api:3001']
         labels:
-          service: 'agent'
+          service: 'consumer'
 
   - job_name: 'agent-dashboard'
     scrape_interval: 5s
@@ -33,6 +26,7 @@ scrape_configs:
           
   - job_name: 'new-agent-api'
     scrape_interval: 5s
+    metrics_path: '/metrics'
     static_configs:
       - targets: ['new-agent-api:3001']
         labels:

@@ -78,7 +78,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(ueta_seller_orders_total)",
+          "expr": "sum(ueta_seller_orders_total{status=~\"delivered|reverted|error|pending_confirmation|received\"})",
           "interval": "",
           "legendFormat": "",
           "refId": "A"

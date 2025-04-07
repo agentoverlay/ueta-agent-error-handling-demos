@@ -18,6 +18,7 @@ import { config } from "../lib/config";
 import { PolicyService } from "../lib/policy-service";
 import { FlagPolicy, PolicyOperator, PolicyTarget } from "../lib/policy-types";
 import { sellerApiRouter } from "./seller-api";
+import register, { metrics } from "./metrics";
 
 // Constants
 const ACCOUNT_FILE = path.join(__dirname, "../account.json");
@@ -41,8 +42,51 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add support for urlencoded data
 
+// Initialize metrics based on current state
+function initializeMetrics() {
+    try {
+        // Set wallet balance if account exists
+        if (fs.existsSync(ACCOUNT_FILE)) {
+            const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
+            const account = JSON.parse(accountData);
+            metrics.wallet_balance.set(account.wallet);
+        }
+        
+        // Set pending orders metrics
+        const orderMetaFile = path.join(__dirname, '../data/order_meta.json');
+        if (fs.existsSync(orderMetaFile)) {
+            const data = fs.readFileSync(orderMetaFile, 'utf8');
+            const orderMeta = JSON.parse(data);
+            
+            // Count pending orders
+            const pendingOrders = Object.values(orderMeta)
+                .filter((order: any) => order.status === "pending_confirmation");
+            
+            metrics.pending_approvals.set(pendingOrders.length);
+            metrics.human_pending_review.set(pendingOrders.length);
+            
+            // Calculate total value pending approval
+            const pendingValue = pendingOrders.reduce((sum: number, order: any) => 
+                sum + (order.totalPrice || 0), 0);
+            metrics.pending_approval_value.set(pendingValue);
+        }
+    } catch (error) {
+        console.error("Error initializing metrics:", error);
+    }
+}
+
 // Register the seller API router
 app.use("/api/seller", sellerApiRouter);
+
+// Metrics endpoint for Prometheus
+app.get("/metrics", async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (err) {
+        res.status(500).end(err);
+    }
+});
 
 // Set up routes
 app.get("/api/health", (req, res) => {
@@ -58,6 +102,10 @@ app.get("/api/account", (req, res) => {
 
         const accountData = fs.readFileSync(ACCOUNT_FILE, "utf-8");
         const account = JSON.parse(accountData);
+        
+        // Update wallet balance metric
+        metrics.wallet_balance.set(account.wallet);
+        
         return res.json(account);
     } catch (error) {
         return res.status(500).json({ error: `Error getting account: ${error}` });
@@ -83,6 +131,9 @@ app.post("/api/account", (req, res) => {
         
         fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
         agentAuditLog(`Account created: ${JSON.stringify(account)}`);
+        
+        // Set initial wallet balance metric
+        metrics.wallet_balance.set(account.wallet);
         
         return res.json({
             message: "Account created successfully",
@@ -357,6 +408,9 @@ app.post("/api/ueta-add-funds", (req, res) => {
         account.wallet += amount;
         fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
         
+        // Update metrics
+        metrics.wallet_balance.set(account.wallet);
+        
         agentAuditLog(`Added funds to wallet: ${amount.toFixed(2)}. New balance: ${account.wallet.toFixed(2)}`);
         
         return res.json({
@@ -395,6 +449,9 @@ app.post("/api/ueta-withdraw-funds", (req, res) => {
         account.wallet -= amount;
         fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
         
+        // Update metrics
+        metrics.wallet_balance.set(account.wallet);
+        
         agentAuditLog(`Withdrew funds from wallet: ${amount.toFixed(2)}. New balance: ${account.wallet.toFixed(2)}`);
         
         return res.json({
@@ -408,8 +465,14 @@ app.post("/api/ueta-withdraw-funds", (req, res) => {
 
 // Place order
 app.post("/api/order", async (req, res) => {
+    // Timing for metrics
+    const startTime = process.hrtime();
+    
     try {
         const { sku, quantity, agentMode = false, simulateError = false } = req.body;
+        
+        // Increment order attempt metric
+        metrics.order_attempts_total.inc();
         
         if (!sku || !quantity) {
             return res.status(400).json({ error: "SKU and quantity are required." });
@@ -460,6 +523,13 @@ app.post("/api/order", async (req, res) => {
         
         const totalCost = product.price * actualQuantity;
         if (account.wallet < totalCost) {
+            // Update metrics for order error
+            metrics.order_errors_total.inc();
+            
+            // Observe API response time
+            const endTime = process.hrtime(startTime);
+            metrics.order_response_time.observe(endTime[0] + endTime[1] / 1e9);
+            
             agentAuditLog(`Order failed: Insufficient funds. Wallet: ${account.wallet}, needed: ${totalCost}`);
             return res.status(400).json({
                 error: `Insufficient funds in wallet. Wallet: ${account.wallet}, Order cost: ${totalCost}`
@@ -592,6 +662,14 @@ app.post("/api/order", async (req, res) => {
         fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
         agentAuditLog(`Updated wallet balance: ${account.wallet}`);
         
+        // Update metrics
+        metrics.wallet_balance.set(account.wallet);
+        metrics.orders_placed_total.inc();
+        
+        // Observe API response time
+        const endTime = process.hrtime(startTime);
+        metrics.order_response_time.observe(endTime[0] + endTime[1] / 1e9);
+        
         return res.json({
             message: "Order placed successfully",
             order,
@@ -674,6 +752,11 @@ app.post("/api/order/approve", async (req, res) => {
             fs.writeFileSync(orderMetaFile, JSON.stringify(orderMeta, null, 2));
             
             agentAuditLog(`Approved and sent order to seller: ${orderId} -> ${sellerOrder.id}`);
+            
+            // Update metrics
+            metrics.approvals_total.inc();
+            metrics.human_approvals_total.inc();
+            metrics.pending_approvals.dec();
             
             return res.json({
                 message: "Order approved and sent to seller",
@@ -1289,6 +1372,9 @@ const PORT = env.API_PORT;
 app.listen(PORT, () => {
     console.log(`Agent API server running on port ${PORT}`);
     console.log(`API available at ${env.NEXT_PUBLIC_API_URL}/api`);
+    
+    // Initialize metrics
+    initializeMetrics();
     
     // Start the MCP server if not already started
     startMcpServer().catch(err => {

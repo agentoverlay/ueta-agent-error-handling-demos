@@ -725,7 +725,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(ueta_agent_pending_approval_value)",
+          "expr": "ueta_agent_pending_approval_value",
           "interval": "",
           "legendFormat": "Value in Pending Approval ($)",
           "refId": "A"
@@ -920,7 +920,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(ueta_agent_pending_approval_value)",
+          "expr": "ueta_agent_pending_approval_value",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
