@@ -1,0 +1,21 @@
+FROM node:18
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Install dependencies
+RUN pnpm install
+
+# Copy source files
+COPY . .
+
+# Expose the port
+EXPOSE 5002
+
+# Start the service
+CMD ["pnpm", "run", "start:consumer"]

@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # Seller API Service
+  seller-api:
+    build:
+      context: ./demo
+      dockerfile: Dockerfile.seller
+    ports:
+      - "4000:4000"
+    environment:
+      - SELLER_PORT=4000
+      - SELLER_URL=http://localhost:4000
+      - CONSUMER_URL=http://localhost:5002
+      - NODE_ENV=production
+    networks:
+      - ueta-network
+    volumes:
+      - ./demo/src/data:/app/src/data
+      # Add this volume for direct TS execution if needed
+      - ./demo/src/api:/app/src/api
+
+  # Agent API Service
+  agent-api:
+    build:
+      context: ./demo
+      dockerfile: Dockerfile.api
+    ports:
+      - "3001:3001"
+    environment:
+      - API_PORT=3001
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - SELLER_URL=http://seller-api:4000
+      - NODE_ENV=production
+    networks:
+      - ueta-network
+    volumes:
+      - ./demo/src/data:/app/src/data
+      - ./demo/src/account.json:/app/src/account.json
+      - ./demo/src/agent_audit.log:/app/src/agent_audit.log
+      # Add this volume for direct TS execution if needed
+      - ./demo/src/api:/app/src/api
+    depends_on:
+      - seller-api
+
+  # UI Service (NextJS Frontend)
+  ui:
+    build:
+      context: ./demo
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+    networks:
+      - ueta-network
+    depends_on:
+      - agent-api
+      - seller-api
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:v2.37.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - ueta-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - agent-api
+      - seller-api
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:9.0.3
+    ports:
+      - "3100:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    networks:
+      - ueta-network
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+
+networks:
+  ueta-network:
+
+volumes:
+  prometheus-data:
+  grafana-data:

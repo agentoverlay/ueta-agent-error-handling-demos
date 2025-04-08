@@ -1,0 +1,44 @@
+{
+  "name": "agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "agent-api": "npx tsx src/api/server.ts",
+    "seller-api": "npx tsx src/api/seller/seller.ts",
+    "minimal-seller": "npx tsx src/api/seller/minimal-seller.ts",
+    "test-server": "npx tsx src/api/seller/test-server.ts",
+    "validate-paths": "npx tsx src/api/seller/validate-paths.ts",
+    "debug-seller": "npx tsx debug-seller-api.js",
+    "local": "sh run-local.sh"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "next": "15.2.4",
+    "node-fetch": "^3.3.2",
+    "prom-client": "^15.1.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/express": "^5.0.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.4",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  }
+}

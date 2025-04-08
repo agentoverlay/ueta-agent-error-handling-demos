@@ -2,12 +2,22 @@ import express from "express";
 import fetch from "node-fetch";
 import fs from "fs";
 import { config } from "./config";
+import * as metrics from "./metrics/human_metrics";
+
+// Seller service URL determined by environment variable
+const SELLER_URL = process.env.SELLER_URL || "http://seller:4000";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 let flaggedOrders: any[] = [];
+
+// Expose metrics endpoint
+app.get("/metrics", async (req, res) => {
+    res.set("Content-Type", metrics.register.contentType);
+    res.end(await metrics.register.metrics());
+});
 
 // Helper for human-side audit logging.
 function humanAuditLog(message: string) {
@@ -27,6 +37,11 @@ app.post("/flag", (req, res) => {
     // Replace any existing order with the same ID.
     flaggedOrders = flaggedOrders.filter((o) => o.id !== flaggedOrder.id);
     flaggedOrders.push(flaggedOrder);
+    
+    // Update metrics
+    metrics.flaggedOrdersCounter.inc({ status: flaggedOrder.status });
+    metrics.pendingReviewGauge.set(flaggedOrders.length);
+    
     humanAuditLog(`Order flagged: ${JSON.stringify(flaggedOrder)}`);
     res.status(200).json({ message: "Flag received", order: flaggedOrder });
 });
@@ -36,7 +51,13 @@ app.post("/revert", async (req, res) => {
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ error: "orderId is required" });
     try {
-        const response = await fetch("http://localhost:4000/revert", {
+        // Find the flagged order to get the timestamp for duration calculation
+        const flaggedOrder = flaggedOrders.find(o => o.id === orderId);
+        const flagTime = flaggedOrder ? new Date(flaggedOrder.orderDate).getTime() : Date.now();
+        const currentTime = Date.now();
+        const durationInSeconds = (currentTime - flagTime) / 1000;
+        
+        const response = await fetch(`${SELLER_URL}/revert`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orderId }),
@@ -50,6 +71,12 @@ app.post("/revert", async (req, res) => {
             );
             return res.status(response.status).json(errorData);
         }
+        
+        // Update metrics
+        metrics.revertCounter.inc();
+        metrics.pendingReviewGauge.dec();
+        metrics.approvalDurationHistogram.observe(durationInSeconds);
+        
         const result = await response.json();
         humanAuditLog(`Order reverted: ${JSON.stringify(result.order)}`);
         flaggedOrders = flaggedOrders.filter((o) => o.id !== orderId);
@@ -68,7 +95,13 @@ app.post("/approve", async (req, res) => {
     const { orderId } = req.body;
     if (!orderId) return res.status(400).json({ error: "orderId is required" });
     try {
-        const response = await fetch("http://localhost:4000/approve", {
+        // Find the flagged order to get the timestamp for duration calculation
+        const flaggedOrder = flaggedOrders.find(o => o.id === orderId);
+        const flagTime = flaggedOrder ? new Date(flaggedOrder.orderDate).getTime() : Date.now();
+        const currentTime = Date.now();
+        const durationInSeconds = (currentTime - flagTime) / 1000;
+        
+        const response = await fetch(`${SELLER_URL}/approve`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orderId }),
@@ -82,6 +115,12 @@ app.post("/approve", async (req, res) => {
             );
             return res.status(response.status).json(errorData);
         }
+        
+        // Update metrics
+        metrics.approvalCounter.inc();
+        metrics.pendingReviewGauge.dec();
+        metrics.approvalDurationHistogram.observe(durationInSeconds);
+        
         const result = await response.json();
         humanAuditLog(`Order approved: ${JSON.stringify(result.order)}`);
         flaggedOrders = flaggedOrders.filter((o) => o.id !== orderId);
@@ -155,6 +194,9 @@ app.get("/dashboard", (req, res) => {
         </tbody>
       </table>
       <script>
+        // Using seller URL from environment variable
+        const sellerUrl = '${SELLER_URL}';
+        
         async function approveOrder(orderId) {
           if (!confirm('Are you sure you want to approve order ' + orderId + '?')) return;
           try {
@@ -207,4 +249,9 @@ app.get("/dashboard", (req, res) => {
 const PORT = process.env.HUMAN_PORT ? parseInt(process.env.HUMAN_PORT) : 5002;
 app.listen(PORT, () => {
     console.log(`Human service listening on port ${PORT}`);
+    console.log(`Metrics available at http://localhost:${PORT}/metrics`);
+    console.log(`Using seller service at: ${SELLER_URL}`);
+    
+    // Initialize metrics with starting values
+    metrics.pendingReviewGauge.set(flaggedOrders.length);
 });

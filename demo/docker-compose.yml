@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # UETA Agent API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "3001:3001"
+    environment:
+      - API_PORT=3001
+      # For standalone mode, use localhost
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      # For integration with main docker-compose, use service names
+      # - NEXT_PUBLIC_API_URL=http://new-agent-api:3001
+      - SELLER_URL=http://seller:4000
+      - CONSUMER_URL=http://consumer:5002
+    depends_on:
+      - seller
+      - consumer
+    volumes:
+      - ./account.json:/app/src/account.json
+      - ./agent_audit.log:/app/src/agent_audit.log
+      - ./src/data/policies.json:/app/src/data/policies.json
+      # Persist the built files
+      - ./dist/api:/app/dist/api
+    networks:
+      - ueta-network
+
+  # UETA Agent Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - api
+    networks:
+      - ueta-network
+
+  # Seller Service (placeholder)
+  seller:
+    image: node:20-alpine
+    command: sh -c "npm install express && node -e \"
+      const app = require('express')();
+      app.use(require('express').json());
+      app.get('/products', (req, res) => {
+        res.json([
+          {sku: 'PROD1', description: 'First Product', price: 9.99},
+          {sku: 'PROD2', description: 'Second Product', price: 19.99},
+          {sku: 'PROD3', description: 'Third Product', price: 29.99}
+        ]);
+      });
+      app.post('/order', (req, res) => {
+        res.json({id: 'order-' + Date.now(), status: 'pending'});
+      });
+      app.get('/pending', (req, res) => {
+        res.json([{id: 'order-123', accountId: req.query.accountId || 'test-account', sku: 'PROD1', quantity: 1, totalPrice: 9.99, status: 'pending'}]);
+      });
+      app.post('/approve', (req, res) => {
+        res.json({success: true, order: {id: req.body.orderId, status: 'approved'}});
+      });
+      app.get('/stats', (req, res) => {
+        res.json({totalOrders: 5, totalAmountPaid: 120.50});
+      });
+      app.listen(4000, () => console.log('Seller service running on port 4000'));
+      \""
+    ports:
+      - "4000:4000"
+    networks:
+      - ueta-network
+
+  # Consumer Service (placeholder)
+  consumer:
+    image: node:20-alpine
+    command: sh -c "npm install express && node -e \"
+      const app = require('express')();
+      app.get('/', (req, res) => {
+        res.send('Consumer service is running');
+      });
+      app.listen(5002, () => console.log('Consumer service running on port 5002'));
+      \""
+    ports:
+      - "5002:5002"
+    networks:
+      - ueta-network
+
+networks:
+  ueta-network:

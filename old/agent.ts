@@ -7,6 +7,11 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import { config } from "./config";
+import * as metrics from "./metrics/agent_metrics";
+
+// Use environment variables with defaults for service URLs
+const SELLER_URL = process.env.SELLER_URL || "http://localhost:4000";
+const HUMAN_URL = process.env.HUMAN_URL || "http://localhost:5002";
 
 const ACCOUNT_FILE = path.join(__dirname, "account.json");
 const STARTING_BALANCE = 1000;
@@ -22,6 +27,22 @@ function agentAuditLog(message: string) {
         console.log(`[AGENT MONITOR] ${logLine}`);
     }
 }
+
+// Setup metrics endpoint in a express app
+const metricsApp = express();
+metricsApp.get("/metrics", async (req, res) => {
+    res.set("Content-Type", metrics.register.contentType);
+    res.end(await metrics.register.metrics());
+});
+
+const METRICS_PORT = 7001;
+metricsApp.listen(METRICS_PORT, () => {
+    console.log(
+        `Agent metrics available at http://localhost:${METRICS_PORT}/metrics`,
+    );
+    console.log(`Using seller service at: ${SELLER_URL}`);
+    console.log(`Using human service at: ${HUMAN_URL}`);
+});
 
 // Command: Create a new account.
 program
@@ -47,6 +68,10 @@ program
             wallet: STARTING_BALANCE - depositAmount,
         };
         fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
+
+        // Update metrics
+        metrics.walletBalanceGauge.set(account.wallet);
+
         console.log("Account created:", account);
         agentAuditLog(`Account created: ${JSON.stringify(account)}`);
     });
@@ -54,10 +79,10 @@ program
 // Command: List available products.
 program
     .command("list-products")
-    .description("Lis" + "t available products")
+    .description("List available products")
     .action(async () => {
         try {
-            const response = await fetch("http://localhost:4000/products");
+            const response = await fetch(`${SELLER_URL}/products`);
             if (!response.ok) {
                 console.error("Error fetching products.");
                 agentAuditLog("Error fetching products from business API.");
@@ -91,6 +116,9 @@ program
     // Specify agent flag so the business can apply the 1/10 probability check.
     .option("--agent", "Indicate this order is placed by the agent", false)
     .action(async (options) => {
+        // Increment order attempt counter
+        metrics.orderAttemptCounter.inc();
+
         let accountId = options.accountId;
         if (!accountId) {
             if (fs.existsSync(ACCOUNT_FILE)) {
@@ -102,6 +130,10 @@ program
                     'No account found. Create an account first using "create-account".',
                 );
                 agentAuditLog("Order failed: No account found.");
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
+
                 process.exit(1);
             }
         }
@@ -109,10 +141,14 @@ program
         let account = JSON.parse(accountData);
         let product;
         try {
-            const res = await fetch("http://localhost:4000/products");
+            const res = await fetch(`${SELLER_URL}/products`);
             if (!res.ok) {
                 console.error("Error fetching products.");
                 agentAuditLog("Error fetching products for order.");
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
+
                 process.exit(1);
             }
             const products = await res.json();
@@ -122,6 +158,10 @@ program
                 agentAuditLog(
                     `Order failed: Product not found for SKU ${options.sku}`,
                 );
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
+
                 process.exit(1);
             }
         } catch (error) {
@@ -129,6 +169,10 @@ program
             agentAuditLog(
                 `Error connecting to business API while fetching products: ${error}`,
             );
+
+            // Increment error counter
+            metrics.orderErrorCounter.inc();
+
             process.exit(1);
         }
         const totalCost = product.price * options.quantity;
@@ -139,6 +183,10 @@ program
             agentAuditLog(
                 `Order failed: Insufficient funds. Wallet: ${account.wallet}, needed: ${totalCost}`,
             );
+
+            // Increment error counter
+            metrics.orderErrorCounter.inc();
+
             process.exit(1);
         }
         const payload = {
@@ -148,22 +196,43 @@ program
             agent: options.agent || false,
         };
         try {
-            const response = await fetch("http://localhost:4000/order", {
+            const startTime = process.hrtime();
+
+            const response = await fetch(`${SELLER_URL}/order`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
+
+            // Calculate response time
+            const duration = process.hrtime(startTime);
+            metrics.orderResponseTimeHistogram.observe(
+                duration[0] + duration[1] / 1e9,
+            );
+
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Error placing order:", errorData);
                 agentAuditLog(`Order error: ${JSON.stringify(errorData)}`);
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
+
                 process.exit(1);
             }
             const order = await response.json();
             console.log("Order placed:", order);
             agentAuditLog(`Order placed: ${JSON.stringify(order)}`);
+
+            // Increment order placed counter
+            metrics.orderPlacedCounter.inc();
+
             account.wallet -= totalCost;
             fs.writeFileSync(ACCOUNT_FILE, JSON.stringify(account, null, 2));
+
+            // Update wallet balance metric
+            metrics.walletBalanceGauge.set(account.wallet);
+
             console.log("Updated wallet balance:", account.wallet);
             agentAuditLog(`Updated wallet balance: ${account.wallet}`);
         } catch (error) {
@@ -171,6 +240,10 @@ program
             agentAuditLog(
                 `Error connecting to business API while placing order: ${error}`,
             );
+
+            // Increment error counter
+            metrics.orderErrorCounter.inc();
+
             process.exit(1);
         }
     });
@@ -191,15 +264,26 @@ program
         let account = JSON.parse(accountData);
         console.log("Starting autonomous agent mode with account:", account.id);
         agentAuditLog(`Agent mode started for account: ${account.id}`);
+
+        // Initialize wallet balance metric
+        metrics.walletBalanceGauge.set(account.wallet);
+
         async function sendRandomOrder() {
+            // Increment order attempt counter
+            metrics.orderAttemptCounter.inc();
+
             const delay = Math.floor(Math.random() * 5000) + 1000;
             await new Promise((res) => setTimeout(res, delay));
             let products;
             try {
-                const res = await fetch("http://localhost:4000/products");
+                const res = await fetch(`${SELLER_URL}/products`);
                 if (!res.ok) {
                     console.error("Error fetching products.");
                     agentAuditLog("Agent error: Failed to fetch products.");
+
+                    // Increment error counter
+                    metrics.orderErrorCounter.inc();
+
                     return;
                 }
                 products = await res.json();
@@ -208,11 +292,19 @@ program
                 agentAuditLog(
                     `Agent error connecting to business API: ${error}`,
                 );
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
+
                 return;
             }
             if (!products || products.length === 0) {
                 console.error("No products available.");
                 agentAuditLog("Agent error: No products available.");
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
+
                 return;
             }
             const product =
@@ -226,6 +318,10 @@ program
                 agentAuditLog(
                     `Agent skipped order due to insufficient funds. Wallet: ${account.wallet}, needed: ${totalCost}`,
                 );
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
+
                 return;
             }
             const payload = {
@@ -235,28 +331,48 @@ program
                 agent: true,
             };
             try {
-                const response = await fetch("http://localhost:4000/order", {
+                const startTime = process.hrtime();
+
+                const response = await fetch(`${SELLER_URL}/order`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),
                 });
+
+                // Calculate response time
+                const duration = process.hrtime(startTime);
+                metrics.orderResponseTimeHistogram.observe(
+                    duration[0] + duration[1] / 1e9,
+                );
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error("Agent order error:", errorData);
                     agentAuditLog(
                         `Agent order error: ${JSON.stringify(errorData)}`,
                     );
+
+                    // Increment error counter
+                    metrics.orderErrorCounter.inc();
                 } else {
                     const order = await response.json();
                     console.log("Agent order placed:", order);
                     agentAuditLog(
                         `Agent order placed: ${JSON.stringify(order)}`,
                     );
+
+                    // Increment order placed counter
+                    metrics.orderPlacedCounter.inc();
+
                     account.wallet -= totalCost;
                     fs.writeFileSync(
                         ACCOUNT_FILE,
                         JSON.stringify(account, null, 2),
                     );
+
+                    // Update wallet balance metric
+                    metrics.walletBalanceGauge.set(account.wallet);
+
                     console.log("Updated wallet balance:", account.wallet);
                     agentAuditLog(
                         `Agent updated wallet balance: ${account.wallet}`,
@@ -267,6 +383,9 @@ program
                 agentAuditLog(
                     `Agent error connecting to business API while placing order: ${error}`,
                 );
+
+                // Increment error counter
+                metrics.orderErrorCounter.inc();
             }
         }
         async function agentLoop() {
@@ -301,12 +420,16 @@ program
         appDashboard.use(express.json());
         appDashboard.use(express.urlencoded({ extended: true }));
 
+        // Add metrics endpoint to the dashboard
+        appDashboard.get("/metrics", async (req, res) => {
+            res.set("Content-Type", metrics.register.contentType);
+            res.end(await metrics.register.metrics());
+        });
+
         appDashboard.get("/dashboard", async (req, res) => {
             try {
                 // Fetch pending orders.
-                const pendingResponse = await fetch(
-                    "http://localhost:4000/pending",
-                );
+                const pendingResponse = await fetch(`${SELLER_URL}/pending`);
                 if (!pendingResponse.ok) {
                     res.send(
                         "Error fetching pending orders from business API.",
@@ -327,9 +450,7 @@ program
                 );
 
                 // Fetch overall stats.
-                const statsResponse = await fetch(
-                    "http://localhost:4000/stats",
-                );
+                const statsResponse = await fetch(`${SELLER_URL}/stats`);
                 const stats = statsResponse.ok
                     ? await statsResponse.json()
                     : { totalOrders: 0, totalAmountPaid: 0 };
@@ -352,6 +473,8 @@ program
             <h1>Agent Dashboard</h1>
             <p>Pending Orders: ${totalPending} | Pending Total Amount: ${totalPendingAmount}</p>
             <p>Overall Delivered Orders: ${stats.totalOrders} | Total Amount Paid: ${stats.totalAmountPaid}</p>
+            <p>Wallet Balance: ${account.wallet}</p>
+            <p><a href="/metrics" target="_blank">View Metrics</a></p>
             <table>
               <thead>
                 <tr>
@@ -388,7 +511,7 @@ program
               async function approveOrder(orderId) {
                 if (!confirm('Approve order ' + orderId + '?')) return;
                 try {
-                  const response = await fetch('http://localhost:4000/approve', {
+                  const response = await fetch('${SELLER_URL}/approve', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ orderId })
@@ -419,6 +542,9 @@ program
         const port = options.port;
         appDashboard.listen(port, () => {
             console.log(`Agent dashboard listening on port ${port}`);
+            console.log(
+                `Agent dashboard metrics available at http://localhost:${port}/metrics`,
+            );
         });
     });
 

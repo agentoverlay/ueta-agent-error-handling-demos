@@ -1,0 +1,28 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
+
+# Install dependencies
+RUN npm install -g pnpm && pnpm install
+
+# Copy the source code
+COPY . .
+
+# Create necessary files and directories if they don't exist
+RUN mkdir -p src/data \
+    && touch src/account.json src/agent_audit.log \
+    && echo '[]' > src/data/policies.json \
+    && echo '{}' > src/data/order_meta.json
+
+# Set the environment variables
+ENV SELLER_URL="http://seller-api:4000"
+ENV CONSUMER_URL="http://consumer:5002"
+
+# Expose the port the app runs on
+EXPOSE 3001
+
+# Start the API server directly with tsx
+CMD ["pnpm", "agent-api"]
