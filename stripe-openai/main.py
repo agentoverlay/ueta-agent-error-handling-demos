@@ -18,9 +18,11 @@ stripe_agent_toolkit = StripeAgentToolkit(
             },
             "products": {
                 "create": True,
+                 "read": True
             },
             "prices": {
                 "create": True,
+                "read": True
             },
         }
     },

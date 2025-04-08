@@ -364,5 +364,312 @@
   "4a2caed7-de6c-4f85-b1e7-b56680ec2307": {
     "policyTriggered": false,
     "policies": []
+  },
+  "ee11e9b0-70ea-47b3-bcf2-134b6861d028": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "312433d3-32ad-4f1e-81d6-473aad17c610": {
+    "id": "312433d3-32ad-4f1e-81d6-473aad17c610",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "APPLES",
+    "quantity": 34,
+    "totalPrice": 101.66000000000001,
+    "orderDate": "2025-04-07T18:53:52.169Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "d037d1ab-6bf8-4367-b0de-be82b29ba77d"
+  },
+  "c7523a01-77be-4b81-9f93-220884e8e657": {
+    "id": "c7523a01-77be-4b81-9f93-220884e8e657",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "APPLES",
+    "quantity": 34,
+    "totalPrice": 101.66000000000001,
+    "orderDate": "2025-04-07T18:54:29.733Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "4bf0b0cb-6c97-4ef4-8912-f4e41528bb32"
+  },
+  "58968755-2c5c-41eb-9d65-c0549239a750": {
+    "id": "58968755-2c5c-41eb-9d65-c0549239a750",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "APPLES",
+    "quantity": 34,
+    "totalPrice": 101.66000000000001,
+    "orderDate": "2025-04-07T20:37:15.047Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "4e2b6eed-4bd5-4f32-a49a-61aaac066941"
+  },
+  "e2f6c306-d349-4f5d-a973-b128b93d6dce": {
+    "id": "e2f6c306-d349-4f5d-a973-b128b93d6dce",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "MILK",
+    "quantity": 35,
+    "totalPrice": 131.25,
+    "orderDate": "2025-04-07T20:37:54.770Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "1682f44d-d9d8-49b4-8604-171cc2518ba6"
+  },
+  "4e812cf8-3c9e-45df-8f5a-b915d3f919e9": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "4a0d6eac-d1c9-4e72-918c-c2035cea70a4": {
+    "id": "4a0d6eac-d1c9-4e72-918c-c2035cea70a4",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "APPLES",
+    "quantity": 11,
+    "totalPrice": 32.89,
+    "orderDate": "2025-04-08T00:53:20.427Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "c5aa125f-76ce-425d-a240-cf55df5a7a31"
+  },
+  "f27b12a5-413a-4fcd-a32e-c9898c19cff3": {
+    "id": "f27b12a5-413a-4fcd-a32e-c9898c19cff3",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "BREAD",
+    "quantity": 23,
+    "totalPrice": 114.77000000000001,
+    "orderDate": "2025-04-08T00:53:54.780Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "047146d7-1680-4504-9f72-596159dc1b50"
+  },
+  "323fccec-87b7-40ca-87b4-e293b434cc73": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "a52c5866-910f-4877-94ab-d9f72cd6c6ad": {
+    "id": "a52c5866-910f-4877-94ab-d9f72cd6c6ad",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "MILK",
+    "quantity": 11,
+    "totalPrice": 41.25,
+    "orderDate": "2025-04-08T06:35:11.809Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "950ad6c9-5ddd-4540-857f-1158441faf25"
+  },
+  "41abe49d-7651-49b2-ba52-e3ecf003391f": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "6f3eff05-4fee-45d3-80af-aec636956fd9": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "69ede579-7610-4e6e-aa87-352facba87f6": {
+    "id": "69ede579-7610-4e6e-aa87-352facba87f6",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "BANANAS",
+    "quantity": 11,
+    "totalPrice": 16.39,
+    "orderDate": "2025-04-08T06:52:08.101Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "b437bd35-af64-472d-a13e-1506185c2227"
+  },
+  "78896cdd-6a3b-4980-9f61-7f7e624ef95a": {
+    "id": "78896cdd-6a3b-4980-9f61-7f7e624ef95a",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "BANANAS",
+    "quantity": 11,
+    "totalPrice": 16.39,
+    "orderDate": "2025-04-08T06:52:52.666Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "e94c751a-4444-4afc-998f-75c85302bf1f"
+  },
+  "52159ffb-9c98-442c-9b9c-4cfd4d37ef99": {
+    "id": "52159ffb-9c98-442c-9b9c-4cfd4d37ef99",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "APPLES",
+    "quantity": 11,
+    "totalPrice": 32.89,
+    "orderDate": "2025-04-08T06:53:34.490Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "63fe5c05-ed85-4590-bf2d-2c0456efdeae"
+  },
+  "1b58f786-c5fe-4458-ab84-e5a3bfd9e3bc": {
+    "id": "1b58f786-c5fe-4458-ab84-e5a3bfd9e3bc",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "BANANAS",
+    "quantity": 11,
+    "totalPrice": 16.39,
+    "orderDate": "2025-04-08T06:53:50.093Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "bc1a3cfc-6ecd-4eb5-8d76-c09f25e80eb0"
+  },
+  "c6c9c38b-ba97-41ed-9ed0-d035135ffda5": {
+    "id": "c6c9c38b-ba97-41ed-9ed0-d035135ffda5",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "BANANAS",
+    "quantity": 11,
+    "totalPrice": 16.39,
+    "orderDate": "2025-04-08T06:55:28.208Z",
+    "status": "sent_to_seller",
+    "agentMode": true,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "8ec820e0-9b80-4ed7-8247-2f30a1839f5a"
+  },
+  "981e0e1d-a6a5-4743-a724-37b24887b1f9": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "a973b9ce-d66f-47e4-8f41-663dae936e15": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "d19dbc5a-4722-4e5f-8aa3-80763cfac6a3": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "08b697d8-75d6-40fb-be7d-02a2fb10825e": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "7c9e51f7-5372-48fa-af3e-947094868504": {
+    "id": "7c9e51f7-5372-48fa-af3e-947094868504",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "BANANAS",
+    "quantity": 110,
+    "totalPrice": 163.9,
+    "orderDate": "2025-04-08T07:06:38.498Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "144764e1-2479-4796-a8cb-07f7e49970cd"
+  },
+  "5d3a9864-c382-4c83-bff3-469e61d1846c": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "9187098f-8973-4612-a4dc-15fc967fe77a": {
+    "id": "9187098f-8973-4612-a4dc-15fc967fe77a",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "BREAD",
+    "quantity": 120,
+    "totalPrice": 598.8000000000001,
+    "orderDate": "2025-04-08T07:09:45.635Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "b35f8d7a-6129-4b0c-bbdb-df4318866d71"
+  },
+  "d3412b36-768c-499f-9fcb-e8175cba2f97": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "e78022c4-55a0-4a92-b3e2-555415465c6c": {
+    "id": "e78022c4-55a0-4a92-b3e2-555415465c6c",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "EGGS",
+    "quantity": 120,
+    "totalPrice": 394.8,
+    "orderDate": "2025-04-08T07:15:18.790Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "653c82a0-6645-467b-a585-67aabded806b"
+  },
+  "8d25c9ca-e738-43b9-abe5-85cdcd05a816": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "dca6b669-3a7e-49cd-a812-ddaa9d91532a": {
+    "id": "dca6b669-3a7e-49cd-a812-ddaa9d91532a",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "EGGS",
+    "quantity": 120,
+    "totalPrice": 394.8,
+    "orderDate": "2025-04-08T07:18:03.011Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "171df524-e814-41e8-982c-ace6a7e4d0be"
+  },
+  "bd8a0960-4157-4cdb-9132-aede2cb26f3d": {
+    "policyTriggered": false,
+    "policies": []
+  },
+  "5b42d298-96d4-4efc-a96b-79519f6fac25": {
+    "id": "5b42d298-96d4-4efc-a96b-79519f6fac25",
+    "accountId": "367fe215-4b0d-4e40-9c4e-5f8f7a9aab0b",
+    "sku": "MILK",
+    "quantity": 100,
+    "totalPrice": 375,
+    "orderDate": "2025-04-08T07:35:13.185Z",
+    "status": "sent_to_seller",
+    "agentMode": false,
+    "policyTriggered": true,
+    "policyReasons": [
+      "Bulk Order"
+    ],
+    "sellerOrderId": "6961a506-6a2b-4f1d-9eca-58dc47a8fdac"
   }
 }

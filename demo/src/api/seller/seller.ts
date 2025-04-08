@@ -411,7 +411,7 @@ app.post("/order", (req, res) => {
         order.error = "Order automatically rejected by seller policy";
     } else if (policyEvaluation.autoApprove) {
         order.status = "delivered";
-    } else if (policyEvaluation.requiresReview || agent) {
+    } else if (policyEvaluation.requiresReview) {
         // Agent orders or orders that trigger review policies go to pending
         order.status = "pending_confirmation";
     } else {
