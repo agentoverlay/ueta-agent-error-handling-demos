@@ -24,153 +24,47 @@ This repository contains demos that illustrate several aspects of AI-assisted le
 - **Human Intervention Dashboard**  
   - A separate human service provides a dashboard where flagged orders are listed, allowing a human operator to approve pending transactions or revert error orders.
 
-## 📊 Demo Applications
+## 🛠 Main Demo Tools
 
-| Demo | Description | Link |
-|------|-------------|------|
-| **UETA Liability Calculator** | [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/agentoverlay/ueta-agent-demos/deploy-calculator.yml?label=build)](https://github.com/agentoverlay/ueta-agent-demos/actions/workflows/deploy-calculator.yml) | [Live Demo](https://agentoverlay.github.io/ueta-agent-demos/ueta-liability-calculator/) |
-| **Agent Dashboard** | Coming Soon | - |
-| **Human Intervention Dashboard** | Coming Soon | - |
+This repository contains several demo applications:
 
-## Features
+### 1. Core Demo (`demo/`)
 
-* **Audit Tracing** — If `auditableLog` is set to true, both the producer and consumer maintain logs to mitigate liability.
-* **Progressive Confirmation** — When enabled (via config or random chance for agent orders), transactions are held pending approval.
-* **Flag Policies** — Define specific conditions that trigger the need for human approval, such as high-value orders or bulk purchases.
-* **Dashboards for Agents and Humans** — Agents can view their pending orders via a dedicated dashboard, while human operators can review and act on flagged transactions.
+A comprehensive application demonstrating the integration of AI agents with the UETA legal framework. It includes:
 
-### Roadmap
+- **Agent Dashboard**: A modern Next.js application for browsing products, creating orders, and managing approvals
+- **Seller Dashboard**: Manage products, view orders, and configure approval policies
+- **API Servers**: Express.js backend servers for both agent and seller interfaces
+- **Policy-based Approval System**: Configure specific conditions that trigger the need for human approval
 
-* Enhanced Progressive Confirmation
-* Improved Detection Mechanisms
-* Error Correction Workflows
-* System State Tracking
-* Support for Two- and Three-Party Agreements
+### 2. UETA Liability Calculator (`calculator/`)
 
-## 🚀 Getting Started
+A specialized tool for calculating potential liability when using AI agents in electronic transactions. This calculator helps organizations understand and quantify the risks associated with agent automation under UETA guidelines.
 
-### Prerequisites
+- Deployed live at [UETA Liability Calculator](https://agentoverlay.github.io/ueta-agent-demos/ueta-liability-calculator/)
+- Evaluates different scenarios and risk factors
+- Provides actionable recommendations based on UETA compliance requirements
 
- [Node.js](https://nodejs.org/) (version 14 or later)
-- [pnpm](https://pnpm.io/)
+### 3. Stripe Payment Integration Demo (`stripe-openai/`)
 
-## Demo
+A demonstration of using the OpenAI Agents SDK with Stripe Agent Toolkit integration, featuring:
 
-**Work in progress**  
-![Demo Screenshot](https://github.com/user-attachments/assets/9e15e422-682c-4942-8566-c19ddcc0087d)
+- Streamlit UI with a chat interface
+- QR code generation for payment links
+- Integration with Stripe's payment processing API
+- Both standalone and MCP (Model Context Protocol) server implementations
 
-## Installation
+## 🚀 Getting Started with Docker
 
-1. Clone the repository.
-2. Install dependencies by running:
+The easiest way to run the demos is using Docker. Each demo can be run independently, or you can run the full system with a single command.
 
-   ```bash
-   pnpm install
-   ```
-
-## Running the Application
-
-### 1. Start the Business API
-
-The business API simulates a goods producer by offering a product catalog and processing orders on port **4000**.
-
-- **Normal mode:**
-
-  ```bash
-  pnpm run start:seller
-  ```
-
-- **Error simulation mode:** (Approximately 10% of orders will trigger a simulated error or require approval)
-
-  ```bash
-  pnpm run start:seller -- --with-error
-  ```
-
-### 2. Use the Agent CLI & Dashboard
-
-The agent CLI lets you create an account with a wallet, list available products, place orders (with a 1/10 probability that approval is required), and run autonomous agent mode. A dashboard is also available to view pending orders for your account.
-
-#### a. Create an Account
-
-This command creates a new account with a wallet. Each new agent starts with a balance of 1000. You can also deduct an initial deposit (default: 100) if desired.
-
-- **Default deposit:**
-
-  ```bash
-  pnpm run start:agent create-account
-  ```
-
-- **Custom deposit (e.g., 200):**
-
-  ```bash
-  pnpm run start:agent create-account -- --deposit 200
-  ```
-
-#### b. List Available Products
-
-Display the product catalog from the business API:
+### Running the Full Demo System
 
 ```bash
-pnpm run start:agent list-products
-```
+# Clone the repository
+git clone https://github.com/madeco/ueta-agent-demos.git
+cd ueta-agent-demos
 
-#### c. Place an Order
-
-Submit an order by specifying the product SKU and quantity. Use the `--agent` flag to indicate the order is placed by the agent. For example, to order 2 units of the product with SKU `SKU001`:
-
-```bash
-pnpm run start:agent order -- --sku SKU001 --quantity 2 --agent
-```
-
-#### d. Start Autonomous Agent Mode
-
-Launch autonomous agent mode, which automatically places random orders at random intervals:
-
-```bash
-pnpm run start:agent agent
-```
-
-#### e. Launch the Agent Dashboard
-
-View pending (pre-approved) orders for your account via a dashboard. By default, the dashboard runs on port **6001**:
-
-```bash
-pnpm run start:agent dashboard
-```
-
-<img width="1785" alt="image" src="https://github.com/user-attachments/assets/f2b7b947-5dec-48d3-83b8-e94a208ac317" />
-
-### 3. Use the Human Intervention Dashboard
-
-The human service provides a dashboard (accessible via a web browser) where flagged orders are listed. Here, a human operator can:
-- **Approve** pending transactions (moving them from `pending_confirmation` to `delivered`).
-- **Revert** orders that encountered errors.
-
-The human service listens on a configurable port (default **5002**). To change it, set the environment variable `HUMAN_PORT`.
-
-To start the human service:
-
-```bash
-pnpm run start:human
-```
-
-Then, access the dashboard at:  
-```
-http://localhost:5002/dashboard
-```
-
-<img width="1785" alt="image" src="https://github.com/user-attachments/assets/80196682-4ab5-42f0-a1f9-49c00eedebd0" />
-
-
-### 4. Using the New NextJS Agent Dashboard
-
-The new agent implementation provides a more modern, user-friendly dashboard built with NextJS. It includes a login screen, product listings, order creation, a dashboard for monitoring, and transaction logs.
-
-#### a. Run with Docker Compose
-
-The easiest way to run the new agent dashboard along with all required services is using Docker Compose:
-
-```bash
 # Ensure required files exist
 chmod +x ensure-files.sh
 ./ensure-files.sh
@@ -181,60 +75,124 @@ docker-compose up -d
 
 This will start:
 - The seller service on port 4000
-- The consumer service on port 5002
-- The original agent on port 7001
-- The original agent dashboard on port 6001
-- The new agent API service on port 3001
-- The new agent frontend on port 3000
-- Prometheus on port 9090
-- Grafana on port 3100
+- The agent API service on port 3001
+- The demo frontend on port 3000
+- Prometheus for monitoring on port 9090
+- Grafana dashboards on port 3100 (login with admin/admin)
 
-#### b. Access the New Dashboard
+### Running Individual Demo Components
 
-Open your browser and navigate to:
-```
-http://localhost:3000
-```
-
-You'll be presented with a login screen where you can create an account to get started.
-
-#### c. Run the New Agent Standalone
-
-Alternatively, you can run just the new agent implementation:
+#### 1. Core Demo Only
 
 ```bash
-cd new/agent
+cd demo
 
-# Ensure required files exist
-chmod +x ensure-files.sh
-./ensure-files.sh
-
-# Start the new agent with its own Docker Compose
+# Start using Docker Compose
 docker-compose up -d
 ```
 
-### 5. Viewing Order Logs
+#### 2. Stripe OpenAI Demo
 
-Logs for both the business and agent sides are maintained (if enabled via `auditableLog`) to support audit tracing and error correction.
+```bash
+cd stripe-openai
+
+# Set required environment variables
+export STRIPE_SECRET_KEY=your_secret_key_here
+export OPENAI_API_KEY=your_openai_key_here
+
+# Build and run the Docker container
+docker build -t stripe-openai-demo .
+docker run -p 8501:8501 -e STRIPE_SECRET_KEY -e OPENAI_API_KEY stripe-openai-demo
+```
+
+## 📊 Demo Interfaces
+
+After starting the services, you can access:
+
+### 1. Core Demo Interfaces:
+- **Agent Dashboard**: http://localhost:3000
+- **Seller API**: http://localhost:4000
+- **Agent API**: http://localhost:3001
+
+### 2. Monitoring Tools:
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3100 (login with admin/admin)
+
+### 3. Stripe OpenAI Demo:
+- **Streamlit UI**: http://localhost:8501 (when running the Stripe demo)
+
+## 🛠 Running Without Docker
+
+If you prefer to run the services without Docker, you can do so following these steps:
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (version 18 or later)
+- [pnpm](https://pnpm.io/)
+- [Python](https://www.python.org/) 3.10+ (for Stripe OpenAI demo)
+
+### 1. Core Demo
+
+```bash
+cd demo
+
+# Install dependencies
+pnpm install
+
+# Start Next.js Frontend (in one terminal)
+pnpm run dev
+
+# Start Agent API Server (in another terminal)
+pnpm run agent-api
+
+# Start Seller API Server (in a third terminal)
+pnpm run seller-api
+```
+
+### 2. Stripe OpenAI Demo
+
+```bash
+cd stripe-openai
+
+# Install dependencies
+pip install -r requirements.txt
+
+# For MCP server (Node.js)
+npm install @stripe/agent-toolkit @modelcontextprotocol/sdk
+
+# Start the Streamlit app
+streamlit run main.py
+
+# Or run as an MCP server
+node mcp_server.js
+```
+
+## Features
+
+* **Audit Tracing** — If `auditableLog` is set to true, both the producer and consumer maintain logs to mitigate liability.
+* **Progressive Confirmation** — When enabled (via config or random chance for agent orders), transactions are held pending approval.
+* **Flag Policies** — Define specific conditions that trigger the need for human approval, such as high-value orders or bulk purchases.
+* **Dashboards for Agents and Humans** — Agents can view their pending orders via a dedicated dashboard, while human operators can review and act on flagged transactions.
 
 ## Project Structure
 
-- **business.ts**  
-  The business API server simulates a goods producer. It maintains a product catalog, processes orders (with optional error simulation and approval requirements), and logs transaction statuses.
-- **agent.ts**  
-  The agent CLI tool allows account creation, wallet management, product listing, order placement, autonomous order placement, and includes a dashboard for viewing pending orders.
-- **human.ts**  
-  The human service provides a dashboard for reviewing flagged orders and supports approving or reverting transactions.
-- **config.ts**  
-  Contains configuration settings that control logging, progressive confirmation, and monitoring.
-- **new/agent/**  
-  Contains the new agent implementation built with NextJS. This provides a more modern web-based dashboard.
+- **demo/**  
+  The main demo application with agent and seller interfaces.
   - **src/api/server.ts**: The API server handling account management, orders, and integration with the seller.
-  - **src/app/page.tsx**: The main page component for the NextJS frontend.
+  - **src/api/seller/seller.ts**: The seller API implementation.
   - **src/components/**: UI components for the dashboard, order form, product list, etc.
-  - **src/lib/**: Shared libraries and configuration.
-- **package.json**  
-  Contains project scripts and dependencies.
+
+- **calculator/**  
+  The UETA liability calculator tool.
+
+- **stripe-openai/**  
+  The Stripe payment integration with OpenAI agents demo.
+
+- **docker-compose.yml**  
+  The main Docker Compose configuration for running all services together.
+
+- **prometheus/** & **grafana/**  
+  Configuration for monitoring and visualization tools.
 
 ## License
 
